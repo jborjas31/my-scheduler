@@ -238,6 +238,80 @@ async function toggleTaskCompletion(taskId) {
     }
 }
 
+// Function to delete task from Firebase
+async function deleteTask(taskId) {
+    if (confirm('Are you sure you want to delete this task?')) {
+        try {
+            await db.collection('tasks').doc(taskId).delete();
+            loadTasks(); // Reload tasks
+        } catch (error) {
+            console.error('Error deleting task:', error);
+        }
+    }
+}
+
+// Function to edit task - replace display with form
+function editTask(taskId, currentName, currentTime, currentPriority) {
+    const timeSlot = document.querySelector(`[data-hour="${currentTime}"]`);
+    if (timeSlot) {
+        const taskArea = timeSlot.querySelector('.task-area');
+        
+        // Create time options for select
+        let timeOptions = '';
+        for (let hour = SCHEDULE_START_HOUR; hour <= SCHEDULE_END_HOUR; hour++) {
+            const selected = hour === currentTime ? 'selected' : '';
+            timeOptions += `<option value="${hour}" ${selected}>${formatHour(hour)}</option>`;
+        }
+        
+        taskArea.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <input type="text" id="edit-name-${taskId}" value="${currentName}" style="padding: 4px; border: 1px solid #ccc; border-radius: 3px;">
+                <div style="display: flex; gap: 8px;">
+                    <select id="edit-time-${taskId}" style="padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;">
+                        ${timeOptions}
+                    </select>
+                    <select id="edit-priority-${taskId}" style="padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;">
+                        <option value="fixed" ${currentPriority === 'fixed' ? 'selected' : ''}>🔒 Fixed</option>
+                        <option value="flexible" ${currentPriority === 'flexible' ? 'selected' : ''}>⏰ Flexible</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                    <button onclick="saveTaskEdit('${taskId}')" style="padding: 4px 8px; font-size: 12px; background-color: #28a745;">Save</button>
+                    <button onclick="cancelTaskEdit()" style="padding: 4px 8px; font-size: 12px; background-color: #6c757d;">Cancel</button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Function to save edited task
+async function saveTaskEdit(taskId) {
+    const newName = document.getElementById(`edit-name-${taskId}`).value.trim();
+    const newTime = parseInt(document.getElementById(`edit-time-${taskId}`).value);
+    const newPriority = document.getElementById(`edit-priority-${taskId}`).value;
+    
+    if (!newName) {
+        alert('Task name cannot be empty');
+        return;
+    }
+    
+    try {
+        await db.collection('tasks').doc(taskId).update({
+            name: newName,
+            time: newTime,
+            priority: newPriority
+        });
+        loadTasks(); // Reload tasks
+    } catch (error) {
+        console.error('Error updating task:', error);
+    }
+}
+
+// Function to cancel task editing
+function cancelTaskEdit() {
+    loadTasks(); // Just reload to restore original display
+}
+
 // Update the display function to show completion status and overdue tasks
 function updateScheduleDisplay(tasks) {
     const now = new Date();
@@ -281,6 +355,12 @@ function updateScheduleDisplay(tasks) {
                 ${priorityLabel} ${task.name} ${completionStatus} ${overdueLabel}
                 <button onclick="toggleTaskCompletion('${task.id}')" style="margin-left: 10px; padding: 2px 6px; font-size: 12px;">
                     ${task.completed ? 'Undo' : 'Done'}
+                </button>
+                <button onclick="editTask('${task.id}', '${task.name.replace(/'/g, "\\'")}', ${task.time}, '${task.priority}')" style="margin-left: 5px; padding: 2px 6px; font-size: 12px; background-color: #17a2b8;">
+                    ✏️
+                </button>
+                <button onclick="deleteTask('${task.id}')" style="margin-left: 5px; padding: 2px 6px; font-size: 12px; background-color: #dc3545;">
+                    ×
                 </button>
             `;
             taskArea.style.color = task.priority === 'fixed' ? '#d32f2f' : '#1976d2';
