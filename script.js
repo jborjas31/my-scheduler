@@ -12,9 +12,34 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// Current viewing date
+let currentViewDate = new Date();
+
 // Configuration for schedule hours
 const SCHEDULE_START_HOUR = 0;  // 12 AM (midnight)
 const SCHEDULE_END_HOUR = 23;   // 11 PM
+
+// Function to format date for display
+function formatDateDisplay(date) {
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    return date.toLocaleDateString('en-US', options);
+}
+
+// Function to get date string for database queries
+function getDateString(date) {
+    return date.toISOString().split('T')[0];
+}
+
+// Function to update date display
+function updateDateDisplay() {
+    document.getElementById('current-date-display').textContent = formatDateDisplay(currentViewDate);
+    document.getElementById('date-picker').value = getDateString(currentViewDate);
+}
 
 // Function to generate time slots dynamically
 function generateSchedule() {
@@ -60,16 +85,10 @@ function formatHour(hour) {
     return `${hour - 12}:00 PM`;
 }
 
-// Function to get today's date as string (YYYY-MM-DD)
-function getTodayString() {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-}
-
-// Function to highlight current time slot
+// Function to highlight current time slot (only for today)
 function highlightCurrentTimeSlot() {
     const now = new Date();
-    const currentHour = now.getHours();
+    const isToday = getDateString(currentViewDate) === getDateString(now);
     
     // Remove existing highlights
     const timeSlots = document.querySelectorAll('.time-slot');
@@ -77,10 +96,13 @@ function highlightCurrentTimeSlot() {
         slot.classList.remove('current-time-slot');
     });
     
-    // Add highlight to current time slot
-    const currentSlot = document.querySelector(`[data-hour="${currentHour}"]`);
-    if (currentSlot) {
-        currentSlot.classList.add('current-time-slot');
+    // Only highlight if viewing today
+    if (isToday) {
+        const currentHour = now.getHours();
+        const currentSlot = document.querySelector(`[data-hour="${currentHour}"]`);
+        if (currentSlot) {
+            currentSlot.classList.add('current-time-slot');
+        }
     }
 }
 
@@ -104,7 +126,7 @@ async function addTask(taskName, taskTime, taskPriority) {
         time: parseInt(taskTime),
         priority: taskPriority,
         completed: false,
-        date: getTodayString() // We'll add this function next
+        date: getDateString(currentViewDate)
     };
     
     try {
@@ -118,9 +140,9 @@ async function addTask(taskName, taskTime, taskPriority) {
 // Function to load tasks from Firebase
 async function loadTasks() {
     try {
-        const todayString = getTodayString();
+        const dateString = getDateString(currentViewDate);
         const snapshot = await db.collection('tasks')
-            .where('date', '==', todayString)
+            .where('date', '==', dateString)
             .get();
         
         const tasks = [];
@@ -137,9 +159,29 @@ async function loadTasks() {
     }
 }
 
+// Navigation functions
+function goToPreviousDay() {
+    currentViewDate.setDate(currentViewDate.getDate() - 1);
+    updateDateDisplay();
+    loadTasks();
+}
+
+function goToNextDay() {
+    currentViewDate.setDate(currentViewDate.getDate() + 1);
+    updateDateDisplay();
+    loadTasks();
+}
+
+function goToToday() {
+    currentViewDate = new Date();
+    updateDateDisplay();
+    loadTasks();
+}
+
 // Handle form submission
 document.addEventListener('DOMContentLoaded', function() {
     generateSchedule();
+    updateDateDisplay();
     loadTasks();
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
@@ -158,6 +200,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the form
         taskForm.reset();
     });
+    
+    // Add navigation event listeners
+    document.getElementById('prev-day-btn').addEventListener('click', goToPreviousDay);
+    document.getElementById('next-day-btn').addEventListener('click', goToNextDay);
+    document.getElementById('today-btn').addEventListener('click', goToToday);
+    
+    // Add date picker event listener
+    document.getElementById('date-picker').addEventListener('change', function(e) {
+        const selectedDate = new Date(e.target.value);
+        // Add one day to compensate for timezone offset
+        selectedDate.setDate(selectedDate.getDate() + 1);
+        currentViewDate = selectedDate;
+        updateDateDisplay();
+        loadTasks();
+    });
+    
+    // Add double-click to go to today
+    document.getElementById('current-date-display').addEventListener('dblclick', goToToday);
 });
 
 // Function to toggle task completion in Firebase
@@ -178,8 +238,12 @@ async function toggleTaskCompletion(taskId) {
     }
 }
 
-// Update the display function to show completion status
+// Update the display function to show completion status and overdue tasks
 function updateScheduleDisplay(tasks) {
+    const now = new Date();
+    const isToday = getDateString(currentViewDate) === getDateString(now);
+    const currentHour = now.getHours();
+    
     // Clear all task areas first
     const taskAreas = document.querySelectorAll('.task-area');
     taskAreas.forEach(area => {
@@ -187,20 +251,39 @@ function updateScheduleDisplay(tasks) {
         area.style.color = '#666';
     });
     
+    // Remove overdue styling from all time slots
+    const timeSlots = document.querySelectorAll('.time-slot');
+    timeSlots.forEach(slot => {
+        slot.classList.remove('overdue-task');
+    });
+    
     // Add tasks to their time slots
     tasks.forEach(task => {
-        const timeSlot = document.querySelector(`[data-hour="${task.time}"] .task-area`);
+        const timeSlot = document.querySelector(`[data-hour="${task.time}"]`);
         if (timeSlot) {
+            const taskArea = timeSlot.querySelector('.task-area');
             const priorityLabel = task.priority === 'fixed' ? '🔒' : '⏰';
             const completionStatus = task.completed ? '✅' : '⭕';
             
-            timeSlot.innerHTML = `
-                ${priorityLabel} ${task.name} ${completionStatus}
+            // Check if task is overdue (only for today, fixed tasks, not completed, past time)
+            const isOverdue = isToday && 
+                            task.priority === 'fixed' && 
+                            !task.completed && 
+                            currentHour > task.time;
+            
+            let overdueLabel = '';
+            if (isOverdue) {
+                overdueLabel = '<span class="overdue-label">OVERDUE</span>';
+                timeSlot.classList.add('overdue-task');
+            }
+            
+            taskArea.innerHTML = `
+                ${priorityLabel} ${task.name} ${completionStatus} ${overdueLabel}
                 <button onclick="toggleTaskCompletion('${task.id}')" style="margin-left: 10px; padding: 2px 6px; font-size: 12px;">
                     ${task.completed ? 'Undo' : 'Done'}
                 </button>
             `;
-            timeSlot.style.color = task.priority === 'fixed' ? '#d32f2f' : '#1976d2';
+            taskArea.style.color = task.priority === 'fixed' ? '#d32f2f' : '#1976d2';
         }
     });
 }

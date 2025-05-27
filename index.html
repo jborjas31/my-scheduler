@@ -7,7 +7,15 @@
 <body>
     <h1>My Daily Scheduler</h1>
     <div class="schedule-container">
-        <h2>Today's Schedule</h2>
+        <div class="date-navigation">
+            <button id="prev-day-btn" class="nav-btn">← Previous Day</button>
+            <div class="date-display">
+                <h2 id="current-date-display">Loading...</h2>
+                <input type="date" id="date-picker">
+                <button id="today-btn" class="today-btn">Today</button>
+            </div>
+            <button id="next-day-btn" class="nav-btn">Next Day →</button>
+        </div>
         <div class="task-input-section">
             <h3>Add New Task</h3>
             <form id="task-form">
