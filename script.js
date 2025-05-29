@@ -1,4 +1,4 @@
-// Firebase configuration - Consider using environment variables in production
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyA0chYZcONeLq57IlskjBJMOx2zFSa8b4k",
   authDomain: "my-scheduler-8c394.firebaseapp.com",
@@ -8,15 +8,9 @@ const firebaseConfig = {
   appId: "1:225852937709:web:58ab245d40ddb19b3c03e4"
 };
 
-// Initialize Firebase with error handling
-try {
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  console.log('Firebase initialized successfully');
-} catch (error) {
-  console.error('Firebase initialization failed:', error);
-  showError('Failed to connect to database. Please refresh the page.');
-}
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 // Global variables
 let currentViewDate = new Date();
@@ -27,19 +21,6 @@ let retryQueue = [];
 // Configuration for schedule hours
 const SCHEDULE_START_HOUR = 0;  // 12 AM (midnight)
 const SCHEDULE_END_HOUR = 23;   // 11 PM
-
-// Add connection monitoring
-window.addEventListener('online', () => {
-  isOnline = true;
-  console.log('Connection restored');
-  showSuccess('Connection restored');
-});
-
-window.addEventListener('offline', () => {
-  isOnline = false;
-  console.log('Connection lost');
-  showError('Connection lost - working offline');
-});
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -246,6 +227,8 @@ function validateTaskTimes(startTime, endTime, taskDate) {
     };
 }
 
+// Add these functions to your script.js file (you can add them in the UTILITY FUNCTIONS section)
+
 // ============================================================================
 // CUSTOM TIME PICKER FUNCTIONS
 // ============================================================================
@@ -289,10 +272,7 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
     const input = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
     
-    if (!input || !dropdown) {
-        console.error(`Time picker elements not found: ${inputId}, ${dropdownId}`);
-        return null;
-    }
+    if (!input || !dropdown) return;
     
     const timeOptions = generateTimeOptions();
     let selectedValue = null;
@@ -320,6 +300,9 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
             optionDiv.textContent = option.text;
             optionDiv.dataset.value = option.value;
             
+            // REMOVE ALL CURRENT TIME HIGHLIGHTING
+            // No more current-time class added - all options look the same
+            
             // Mark selected option only
             if (selectedValue !== null && option.value === selectedValue) {
                 optionDiv.classList.add('selected');
@@ -333,12 +316,13 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
             dropdown.appendChild(optionDiv);
         });
         
-        // Scroll to selected or closest option
+        // Scroll to selected or closest option without special highlighting
         setTimeout(() => {
             const selectedOption = dropdown.querySelector('.selected') ||
                                 dropdown.querySelector(`[data-value="${closestOption.value}"]`);
             
             if (selectedOption) {
+                // Calculate scroll position to center the option
                 const dropdownHeight = dropdown.clientHeight;
                 const optionHeight = selectedOption.offsetHeight;
                 const optionTop = selectedOption.offsetTop;
@@ -350,10 +334,13 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
     }
     
     function selectTimeOption(option) {
+        // Clear ALL previous selections and special classes
         dropdown.querySelectorAll('.time-option').forEach(opt => {
             opt.classList.remove('selected');
+            opt.classList.remove('current-time'); // Remove any lingering current-time classes
         });
         
+        // Select new option
         const optionDiv = dropdown.querySelector(`[data-value="${option.value}"]`);
         if (optionDiv) {
             optionDiv.classList.add('selected');
@@ -365,6 +352,7 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
     }
     
     function showDropdown() {
+        // Hide all other dropdowns first
         document.querySelectorAll('.time-dropdown').forEach(dd => {
             dd.classList.remove('show');
         });
@@ -387,6 +375,7 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
                 selectedValue = parsedTime;
                 input.value = formatTimeFromMinutes(parsedTime);
                 
+                // Update selected option in dropdown if it's open
                 if (isDropdownOpen) {
                     dropdown.querySelectorAll('.time-option').forEach(opt => {
                         opt.classList.remove('selected');
@@ -397,6 +386,7 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
                     }
                 }
             } else {
+                // If parsing failed, revert to previous valid value or default
                 if (selectedValue !== null) {
                     input.value = formatTimeFromMinutes(selectedValue);
                 } else {
@@ -415,19 +405,23 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
     });
     
     input.addEventListener('focus', (e) => {
+        // Select all text when focused for easy editing
         setTimeout(() => {
             e.target.select();
         }, 10);
     });
     
     input.addEventListener('input', (e) => {
+        // Real-time validation as user types
         const inputValue = e.target.value;
         
+        // Try to find matching option while typing
         const matchingOption = timeOptions.find(opt => 
             opt.text.toLowerCase().startsWith(inputValue.toLowerCase())
         );
         
         if (matchingOption && isDropdownOpen) {
+            // Update dropdown selection
             dropdown.querySelectorAll('.time-option').forEach(opt => {
                 opt.classList.remove('selected');
             });
@@ -440,10 +434,11 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
     });
     
     input.addEventListener('blur', (e) => {
+        // Validate and format the input when user finishes editing
         setTimeout(() => {
             validateAndUpdateTime();
             hideDropdown();
-        }, 150);
+        }, 150); // Delay to allow dropdown clicks
     });
     
     input.addEventListener('keydown', (e) => {
@@ -476,6 +471,7 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
     // Initialize with default time
     setDefaultTime();
     
+    // Return getter/setter functions
     return {
         getValue: () => selectedValue,
         setValue: (minutes) => {
@@ -511,10 +507,6 @@ let startTimePicker, endTimePicker;
 
 async function getTasksForDate(dateString) {
     try {
-        if (!db) {
-            throw new Error('Database not initialized');
-        }
-        
         const snapshot = await db.collection('tasks')
             .where('date', '==', dateString)
             .get();
@@ -535,7 +527,6 @@ async function getTasksForDate(dateString) {
         return tasks;
     } catch (error) {
         console.error('Error getting tasks:', error);
-        showError('Failed to load tasks. Please check your internet connection.');
         return [];
     }
 }
@@ -608,7 +599,7 @@ function generateSchedule() {
         }
     }
     
-    // Initialize custom time pickers
+    // Initialize custom time pickers (remove the old dropdown population code)
     initializeTimePickers();
 }
 
@@ -618,12 +609,8 @@ function initializeTimePickers() {
     
     // Initialize end time picker (defaults to 1 hour after current time)
     endTimePicker = initializeTimePicker('task-end-time', 'end-time-dropdown', 60);
-    
-    if (!startTimePicker || !endTimePicker) {
-        console.error('Failed to initialize time pickers');
-        showError('Time picker initialization failed. Please refresh the page.');
-    }
 }
+
 
 function highlightCurrentTimeSlot() {
     const now = new Date();
@@ -789,12 +776,6 @@ async function addTask(taskName, startTime, endTime, taskPriority) {
         return;
     }
     
-    // Check if time pickers are initialized
-    if (!startTimePicker || !endTimePicker) {
-        showError('Time pickers not initialized. Please refresh the page.');
-        return;
-    }
-    
     // Get values from custom time pickers
     let finalStartTime = startTimePicker.getValue();
     let finalEndTime = endTimePicker.getValue();
@@ -841,10 +822,6 @@ async function addTask(taskName, startTime, endTime, taskPriority) {
     };
     
     try {
-        if (!db) {
-            throw new Error('Database not available');
-        }
-        
         setLoadingState(true);
         await db.collection('tasks').add(newTask);
         
@@ -878,10 +855,6 @@ async function addTask(taskName, startTime, endTime, taskPriority) {
 // Make functions globally accessible for HTML onclick
 window.toggleTaskCompletion = async function(taskId) {
     try {
-        if (!db) {
-            throw new Error('Database not available');
-        }
-        
         setLoadingState(true);
         const taskRef = db.collection('tasks').doc(taskId);
         const doc = await taskRef.get();
@@ -904,10 +877,6 @@ window.toggleTaskCompletion = async function(taskId) {
 window.deleteTask = async function(taskId) {
     if (confirm('Are you sure you want to delete this task?')) {
         try {
-            if (!db) {
-                throw new Error('Database not available');
-            }
-            
             setLoadingState(true);
             await db.collection('tasks').doc(taskId).delete();
             loadTasks();
@@ -1013,10 +982,6 @@ window.saveTaskEdit = async function(taskId) {
     }
     
     try {
-        if (!db) {
-            throw new Error('Database not available');
-        }
-        
         setLoadingState(true);
         await db.collection('tasks').doc(taskId).update({
             name: newName,
@@ -1048,11 +1013,6 @@ async function loadTasks() {
     try {
         setLoadingState(true);
         const dateString = getDateString(currentViewDate);
-        
-        if (!db) {
-            throw new Error('Database not initialized');
-        }
-        
         const snapshot = await db.collection('tasks')
             .where('date', '==', dateString)
             .get();
@@ -1110,6 +1070,7 @@ function goToToday() {
     updateDateDisplay();
     loadTasks();
     
+    // Scroll to current time after a short delay to ensure DOM is updated
     setTimeout(() => {
         scrollToCurrentTime();
     }, 300);
@@ -1119,22 +1080,27 @@ function scrollToCurrentTime() {
     const now = new Date();
     const currentHour = now.getHours();
     
+    // Find the time slot for the current hour
     const currentTimeSlot = document.querySelector(`[data-hour="${currentHour}"]`);
     
     if (currentTimeSlot) {
+        // Smooth scroll to the current time slot and center it
         currentTimeSlot.scrollIntoView({
             behavior: 'smooth',
             block: 'center',
             inline: 'nearest'
         });
         
+        // Add a subtle highlight effect to draw attention
         currentTimeSlot.style.transition = 'background-color 0.6s ease';
         const originalBackground = currentTimeSlot.style.backgroundColor;
         
+        // Briefly highlight the current time slot
         currentTimeSlot.style.backgroundColor = '#e3f2fd';
         
         setTimeout(() => {
             currentTimeSlot.style.backgroundColor = originalBackground;
+            // Remove the transition after the effect
             setTimeout(() => {
                 currentTimeSlot.style.transition = '';
             }, 600);
@@ -1147,96 +1113,82 @@ function scrollToCurrentTime() {
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if Firebase is loaded
     if (typeof firebase === 'undefined') {
         showError('Firebase is not loaded. Please check your internet connection.');
         return;
     }
     
-    // Check if database is initialized
-    if (typeof db === 'undefined') {
-        showError('Database connection failed. Please check your internet connection.');
-        return;
+    generateSchedule();
+    updateDateDisplay();
+    loadTasks();
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    
+    // Form event listener
+    const taskForm = document.getElementById('task-form');
+if (taskForm) {
+    taskForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const taskName = document.getElementById('task-name')?.value || '';
+        const taskPriority = document.getElementById('task-priority')?.value || '';
+        
+        // The time values are now handled by the time pickers
+        addTask(taskName, null, null, taskPriority); // startTime and endTime parameters are now unused
+    });
+}
+    
+    // Navigation event listeners
+    const prevBtn = document.getElementById('prev-day-btn');
+    const nextBtn = document.getElementById('next-day-btn');
+    const todayBtn = document.getElementById('today-btn');
+    const datePicker = document.getElementById('date-picker');
+    const currentDateDisplay = document.getElementById('current-date-display');
+    
+    if (prevBtn) prevBtn.addEventListener('click', goToPreviousDay);
+    if (nextBtn) nextBtn.addEventListener('click', goToNextDay);
+    if (todayBtn) todayBtn.addEventListener('click', goToToday);
+    
+    if (datePicker) {
+        datePicker.addEventListener('change', function(e) {
+            try {
+                const selectedValue = e.target.value;
+                if (!selectedValue) {
+                    showError('Please select a valid date');
+                    return;
+                }
+                
+                const selectedDate = new Date(selectedValue + 'T12:00:00');
+                
+                const today = new Date();
+                const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+                const oneYearFromNow = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+                
+                if (selectedDate < oneYearAgo) {
+                    showError('Cannot schedule tasks more than 1 year in the past');
+                    e.target.value = getDateString(currentViewDate);
+                    return;
+                }
+                
+                if (selectedDate > oneYearFromNow) {
+                    showError('Cannot schedule tasks more than 1 year in the future');
+                    e.target.value = getDateString(currentViewDate);
+                    return;
+                }
+                
+                currentViewDate = selectedDate;
+                updateDateDisplay();
+                loadTasks();
+                
+            } catch (error) {
+                console.error('Date picker error:', error);
+                showError('Invalid date selected');
+                e.target.value = getDateString(currentViewDate);
+            }
+        });
     }
     
-    try {
-        generateSchedule();
-        updateDateDisplay();
-        loadTasks();
-        updateCurrentTime();
-        setInterval(updateCurrentTime, 1000);
-        
-        // Form event listener
-        const taskForm = document.getElementById('task-form');
-        if (taskForm) {
-            taskForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const taskName = document.getElementById('task-name')?.value || '';
-                const taskPriority = document.getElementById('task-priority')?.value || '';
-                
-                addTask(taskName, null, null, taskPriority);
-            });
-        }
-        
-        // Navigation event listeners
-        const prevBtn = document.getElementById('prev-day-btn');
-        const nextBtn = document.getElementById('next-day-btn');
-        const todayBtn = document.getElementById('today-btn');
-        const datePicker = document.getElementById('date-picker');
-        const currentDateDisplay = document.getElementById('current-date-display');
-        
-        if (prevBtn) prevBtn.addEventListener('click', goToPreviousDay);
-        if (nextBtn) nextBtn.addEventListener('click', goToNextDay);
-        if (todayBtn) todayBtn.addEventListener('click', goToToday);
-        
-        if (datePicker) {
-            datePicker.addEventListener('change', function(e) {
-                try {
-                    const selectedValue = e.target.value;
-                    if (!selectedValue) {
-                        showError('Please select a valid date');
-                        return;
-                    }
-                    
-                    const selectedDate = new Date(selectedValue + 'T12:00:00');
-                    
-                    const today = new Date();
-                    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-                    const oneYearFromNow = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
-                    
-                    if (selectedDate < oneYearAgo) {
-                        showError('Cannot schedule tasks more than 1 year in the past');
-                        e.target.value = getDateString(currentViewDate);
-                        return;
-                    }
-                    
-                    if (selectedDate > oneYearFromNow) {
-                        showError('Cannot schedule tasks more than 1 year in the future');
-                        e.target.value = getDateString(currentViewDate);
-                        return;
-                    }
-                    
-                    currentViewDate = selectedDate;
-                    updateDateDisplay();
-                    loadTasks();
-                    
-                } catch (error) {
-                    console.error('Date picker error:', error);
-                    showError('Invalid date selected');
-                    e.target.value = getDateString(currentViewDate);
-                }
-            });
-        }
-        
-        if (currentDateDisplay) {
-            currentDateDisplay.addEventListener('dblclick', goToToday);
-        }
-        
-        console.log('App initialized successfully');
-        
-    } catch (error) {
-        console.error('Initialization error:', error);
-        showError('App failed to initialize. Please refresh the page.');
+    if (currentDateDisplay) {
+        currentDateDisplay.addEventListener('dblclick', goToToday);
     }
 });
