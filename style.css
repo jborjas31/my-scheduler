@@ -424,3 +424,179 @@ button[type="submit"] {
         border: 1px solid #ccc;
     }
 }
+
+/* Custom Time Picker Styles - Google Calendar Style */
+.custom-time-input {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.time-picker-input {
+    width: 100%;
+    padding: 10px 35px 10px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: white;
+    cursor: text;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.time-picker-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.time-picker-input:hover {
+    border-color: #007bff;
+}
+
+/* Dropdown arrow */
+.custom-time-input::after {
+    content: '▼';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #666;
+    font-size: 12px;
+    z-index: 1;
+    transition: color 0.2s;
+}
+
+.custom-time-input:hover::after {
+    color: #007bff;
+}
+
+.time-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.time-dropdown.show {
+    display: block;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.time-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.15s;
+    display: flex;
+    align-items: center;
+}
+
+.time-option:hover {
+    background-color: #f8f9fa;
+}
+
+.time-option.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.time-option.selected:hover {
+    background-color: #0056b3;
+}
+
+.time-option.current-time {
+    background-color: #fff3cd;
+    font-weight: 500;
+    position: relative;
+}
+
+.time-option.current-time::before {
+    content: '●';
+    color: #ffc107;
+    margin-right: 8px;
+    font-size: 12px;
+}
+
+.time-option.current-time.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.time-option.current-time.selected::before {
+    color: white;
+}
+
+.time-option:last-child {
+    border-bottom: none;
+}
+
+/* Scrollbar styling for dropdown */
+.time-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.time-dropdown::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.time-dropdown::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.time-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .time-dropdown {
+        max-height: 180px;
+    }
+    
+    .time-option {
+        padding: 12px 16px;
+        font-size: 16px;
+    }
+    
+    .time-picker-input {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .time-option.current-time {
+        background-color: #ffeb3b;
+        border: 1px solid #333;
+    }
+    
+    .time-option.selected {
+        background-color: #000;
+        color: #fff;
+        border: 2px solid #fff;
+    }
+}

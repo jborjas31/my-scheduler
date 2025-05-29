@@ -227,6 +227,282 @@ function validateTaskTimes(startTime, endTime, taskDate) {
     };
 }
 
+// Add these functions to your script.js file (you can add them in the UTILITY FUNCTIONS section)
+
+// ============================================================================
+// CUSTOM TIME PICKER FUNCTIONS
+// ============================================================================
+
+function generateTimeOptions() {
+    const options = [];
+    for (let hour = 0; hour <= 23; hour++) {
+        for (let minute = 0; minute < 60; minute += 15) {
+            const minutes = hour * 60 + minute;
+            const timeText = formatTimeFromMinutes(minutes);
+            options.push({
+                value: minutes,
+                text: timeText,
+                minutes: minutes
+            });
+        }
+    }
+    return options;
+}
+
+function getCurrentTimeMinutes() {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+}
+
+function findClosestTimeOption(targetMinutes, timeOptions) {
+    let closest = timeOptions[0];
+    let minDiff = Math.abs(targetMinutes - closest.minutes);
+    
+    for (let option of timeOptions) {
+        const diff = Math.abs(targetMinutes - option.minutes);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closest = option;
+        }
+    }
+    return closest;
+}
+
+function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    
+    if (!input || !dropdown) return;
+    
+    const timeOptions = generateTimeOptions();
+    let selectedValue = null;
+    let isDropdownOpen = false;
+    
+    // Set initial default time
+    function setDefaultTime() {
+        const currentTime = getCurrentTimeMinutes() + defaultOffsetMinutes;
+        const closestOption = findClosestTimeOption(currentTime, timeOptions);
+        selectedValue = closestOption.value;
+        input.value = closestOption.text;
+        return closestOption;
+    }
+    
+    // Populate dropdown and center around current time
+    function populateDropdown() {
+        dropdown.innerHTML = '';
+        
+        const currentTime = getCurrentTimeMinutes() + defaultOffsetMinutes;
+        const closestOption = findClosestTimeOption(currentTime, timeOptions);
+        
+        timeOptions.forEach((option) => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'time-option';
+            optionDiv.textContent = option.text;
+            optionDiv.dataset.value = option.value;
+            
+            // Highlight current time area (within 30 minutes)
+            if (Math.abs(option.minutes - currentTime) <= 30) {
+                optionDiv.classList.add('current-time');
+            }
+            
+            // Mark selected option
+            if (selectedValue !== null && option.value === selectedValue) {
+                optionDiv.classList.add('selected');
+            }
+            
+            optionDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectTimeOption(option);
+            });
+            
+            dropdown.appendChild(optionDiv);
+        });
+        
+        // Scroll to current time area after dropdown is rendered
+        setTimeout(() => {
+            const currentTimeOption = dropdown.querySelector('.current-time') || 
+                                    dropdown.querySelector('.selected') ||
+                                    dropdown.querySelector(`[data-value="${closestOption.value}"]`);
+            
+            if (currentTimeOption) {
+                // Calculate scroll position to center the current time option
+                const dropdownHeight = dropdown.clientHeight;
+                const optionHeight = currentTimeOption.offsetHeight;
+                const optionTop = currentTimeOption.offsetTop;
+                const centerPosition = optionTop - (dropdownHeight / 2) + (optionHeight / 2);
+                
+                dropdown.scrollTop = Math.max(0, centerPosition);
+            }
+        }, 10);
+    }
+    
+    function selectTimeOption(option) {
+        // Clear previous selections
+        dropdown.querySelectorAll('.time-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        // Select new option
+        const optionDiv = dropdown.querySelector(`[data-value="${option.value}"]`);
+        if (optionDiv) {
+            optionDiv.classList.add('selected');
+        }
+        
+        selectedValue = option.value;
+        input.value = option.text;
+        hideDropdown();
+    }
+    
+    function showDropdown() {
+        // Hide all other dropdowns first
+        document.querySelectorAll('.time-dropdown').forEach(dd => {
+            dd.classList.remove('show');
+        });
+        
+        populateDropdown();
+        dropdown.classList.add('show');
+        isDropdownOpen = true;
+    }
+    
+    function hideDropdown() {
+        dropdown.classList.remove('show');
+        isDropdownOpen = false;
+    }
+    
+    function validateAndUpdateTime() {
+        const inputValue = input.value.trim();
+        if (inputValue) {
+            const parsedTime = parseManualTime(inputValue);
+            if (parsedTime !== null) {
+                selectedValue = parsedTime;
+                input.value = formatTimeFromMinutes(parsedTime);
+                
+                // Update selected option in dropdown if it's open
+                if (isDropdownOpen) {
+                    dropdown.querySelectorAll('.time-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    const matchingOption = dropdown.querySelector(`[data-value="${parsedTime}"]`);
+                    if (matchingOption) {
+                        matchingOption.classList.add('selected');
+                    }
+                }
+            } else {
+                // If parsing failed, revert to previous valid value or default
+                if (selectedValue !== null) {
+                    input.value = formatTimeFromMinutes(selectedValue);
+                } else {
+                    setDefaultTime();
+                }
+            }
+        }
+    }
+    
+    // Event listeners
+    input.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isDropdownOpen) {
+            showDropdown();
+        }
+    });
+    
+    input.addEventListener('focus', (e) => {
+        // Select all text when focused for easy editing
+        setTimeout(() => {
+            e.target.select();
+        }, 10);
+    });
+    
+    input.addEventListener('input', (e) => {
+        // Real-time validation as user types
+        const inputValue = e.target.value;
+        
+        // Try to find matching option while typing
+        const matchingOption = timeOptions.find(opt => 
+            opt.text.toLowerCase().startsWith(inputValue.toLowerCase())
+        );
+        
+        if (matchingOption && isDropdownOpen) {
+            // Update dropdown selection
+            dropdown.querySelectorAll('.time-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            const optionDiv = dropdown.querySelector(`[data-value="${matchingOption.value}"]`);
+            if (optionDiv) {
+                optionDiv.classList.add('selected');
+                optionDiv.scrollIntoView({ block: 'nearest' });
+            }
+        }
+    });
+    
+    input.addEventListener('blur', (e) => {
+        // Validate and format the input when user finishes editing
+        setTimeout(() => {
+            validateAndUpdateTime();
+            hideDropdown();
+        }, 150); // Delay to allow dropdown clicks
+    });
+    
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            validateAndUpdateTime();
+            hideDropdown();
+            input.blur();
+        } else if (e.key === 'Escape') {
+            hideDropdown();
+            input.blur();
+        } else if (e.key === 'ArrowDown' && isDropdownOpen) {
+            e.preventDefault();
+            const selected = dropdown.querySelector('.selected');
+            const next = selected ? selected.nextElementSibling : dropdown.firstElementChild;
+            if (next && next.classList.contains('time-option')) {
+                const option = timeOptions.find(opt => opt.value == next.dataset.value);
+                if (option) selectTimeOption(option);
+            }
+        } else if (e.key === 'ArrowUp' && isDropdownOpen) {
+            e.preventDefault();
+            const selected = dropdown.querySelector('.selected');
+            const prev = selected ? selected.previousElementSibling : dropdown.lastElementChild;
+            if (prev && prev.classList.contains('time-option')) {
+                const option = timeOptions.find(opt => opt.value == prev.dataset.value);
+                if (option) selectTimeOption(option);
+            }
+        }
+    });
+    
+    // Initialize with default time
+    setDefaultTime();
+    
+    // Return getter/setter functions
+    return {
+        getValue: () => selectedValue,
+        setValue: (minutes) => {
+            const option = timeOptions.find(opt => opt.value === minutes);
+            if (option) {
+                selectedValue = option.value;
+                input.value = option.text;
+            }
+        },
+        getValueAsString: () => input.value,
+        isValid: () => {
+            if (selectedValue !== null) return true;
+            return parseManualTime(input.value) !== null;
+        }
+    };
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-time-input')) {
+        document.querySelectorAll('.time-dropdown').forEach(dropdown => {
+            dropdown.classList.remove('show');
+        });
+    }
+});
+
+// Global variables to store time picker instances
+let startTimePicker, endTimePicker;
+
 // ============================================================================
 // DATA FUNCTIONS
 // ============================================================================
@@ -301,12 +577,8 @@ function updateDateDisplay() {
 
 function generateSchedule() {
     const scheduleGrid = document.querySelector('.schedule-grid');
-    const startTimeSelect = document.getElementById('task-start-time');
-    const endTimeSelect = document.getElementById('task-end-time');
     
     if (scheduleGrid) scheduleGrid.innerHTML = '';
-    if (startTimeSelect) startTimeSelect.innerHTML = '';
-    if (endTimeSelect) endTimeSelect.innerHTML = '';
     
     // Generate hourly time slots for display
     for (let hour = SCHEDULE_START_HOUR; hour <= SCHEDULE_END_HOUR; hour++) {
@@ -329,30 +601,18 @@ function generateSchedule() {
         }
     }
     
-    // Generate 15-minute intervals for dropdowns
-    if (startTimeSelect && endTimeSelect) {
-        for (let hour = SCHEDULE_START_HOUR; hour <= SCHEDULE_END_HOUR; hour++) {
-            for (let minute = 0; minute < 60; minute += 15) {
-                const timeValue = hour * 60 + minute;
-                const timeText = formatTimeFromMinutes(timeValue);
-                
-                const startOption = document.createElement('option');
-                startOption.value = timeValue;
-                startOption.textContent = timeText;
-                startTimeSelect.appendChild(startOption);
-                
-                const endOption = document.createElement('option');
-                endOption.value = timeValue;
-                endOption.textContent = timeText;
-                endTimeSelect.appendChild(endOption);
-            }
-        }
-        
-        if (endTimeSelect.children.length > 4) {
-            endTimeSelect.selectedIndex = 4;
-        }
-    }
+    // Initialize custom time pickers (remove the old dropdown population code)
+    initializeTimePickers();
 }
+
+function initializeTimePickers() {
+    // Initialize start time picker (defaults to current time)
+    startTimePicker = initializeTimePicker('task-start-time', 'start-time-dropdown', 0);
+    
+    // Initialize end time picker (defaults to 1 hour after current time)
+    endTimePicker = initializeTimePicker('task-end-time', 'end-time-dropdown', 60);
+}
+
 
 function highlightCurrentTimeSlot() {
     const now = new Date();
@@ -518,22 +778,14 @@ async function addTask(taskName, startTime, endTime, taskPriority) {
         return;
     }
     
-    const manualStart = document.getElementById('task-start-manual')?.value;
-    const manualEnd = document.getElementById('task-end-manual')?.value;
+    // Get values from custom time pickers
+    let finalStartTime = startTimePicker.getValue();
+    let finalEndTime = endTimePicker.getValue();
     
-    let finalStartTime = startTime;
-    let finalEndTime = endTime;
-    
-    if (manualStart) {
-        const parsedStart = parseManualTime(manualStart);
-        if (parsedStart === null) return;
-        finalStartTime = parsedStart;
-    }
-    
-    if (manualEnd) {
-        const parsedEnd = parseManualTime(manualEnd);
-        if (parsedEnd === null) return;
-        finalEndTime = parsedEnd;
+    // Validate that both time pickers have valid values
+    if (finalStartTime === null || finalEndTime === null) {
+        showError('Please select valid start and end times');
+        return;
     }
     
     const validation = validateTaskTimes(finalStartTime, finalEndTime, currentViewDate);
@@ -577,6 +829,9 @@ async function addTask(taskName, startTime, endTime, taskPriority) {
         
         const taskForm = document.getElementById('task-form');
         if (taskForm) taskForm.reset();
+        
+        // Reset time pickers to default values
+        initializeTimePickers();
         
         const successMsg = validation.crossesMidnight 
             ? `Cross-midnight task "${cleanTaskName}" added! (${validation.durationText})`
@@ -816,6 +1071,43 @@ function goToToday() {
     currentViewDate = new Date();
     updateDateDisplay();
     loadTasks();
+    
+    // Scroll to current time after a short delay to ensure DOM is updated
+    setTimeout(() => {
+        scrollToCurrentTime();
+    }, 300);
+}
+
+function scrollToCurrentTime() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    
+    // Find the time slot for the current hour
+    const currentTimeSlot = document.querySelector(`[data-hour="${currentHour}"]`);
+    
+    if (currentTimeSlot) {
+        // Smooth scroll to the current time slot and center it
+        currentTimeSlot.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+        });
+        
+        // Add a subtle highlight effect to draw attention
+        currentTimeSlot.style.transition = 'background-color 0.6s ease';
+        const originalBackground = currentTimeSlot.style.backgroundColor;
+        
+        // Briefly highlight the current time slot
+        currentTimeSlot.style.backgroundColor = '#e3f2fd';
+        
+        setTimeout(() => {
+            currentTimeSlot.style.backgroundColor = originalBackground;
+            // Remove the transition after the effect
+            setTimeout(() => {
+                currentTimeSlot.style.transition = '';
+            }, 600);
+        }, 1000);
+    }
 }
 
 // ============================================================================
@@ -836,18 +1128,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Form event listener
     const taskForm = document.getElementById('task-form');
-    if (taskForm) {
-        taskForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const taskName = document.getElementById('task-name')?.value || '';
-            const startTime = document.getElementById('task-start-time')?.value || '';
-            const endTime = document.getElementById('task-end-time')?.value || '';
-            const taskPriority = document.getElementById('task-priority')?.value || '';
-            
-            addTask(taskName, startTime, endTime, taskPriority);
-        });
-    }
+if (taskForm) {
+    taskForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const taskName = document.getElementById('task-name')?.value || '';
+        const taskPriority = document.getElementById('task-priority')?.value || '';
+        
+        // The time values are now handled by the time pickers
+        addTask(taskName, null, null, taskPriority); // startTime and endTime parameters are now unused
+    });
+}
     
     // Navigation event listeners
     const prevBtn = document.getElementById('prev-day-btn');
