@@ -41,6 +41,55 @@
         <div class="current-time">
             <strong>Current Time: <span id="current-time-display">Loading...</span></strong>
         </div>
+
+        <!-- Task Dashboard -->
+        <div class="task-dashboard">
+            <h3>📋 Your Tasks Right Now</h3>
+            
+            <!-- Right Now Section -->
+            <div class="dashboard-section" id="right-now-section">
+                <div class="section-header">
+                    <span class="section-icon">🔴</span>
+                    <span class="section-title">Right Now</span>
+                </div>
+                <div class="section-content" id="right-now-content">
+                    <p class="no-tasks">No current tasks</p>
+                </div>
+            </div>
+            
+            <!-- Coming Up Section -->
+            <div class="dashboard-section" id="coming-up-section">
+                <div class="section-header">
+                    <span class="section-icon">⏰</span>
+                    <span class="section-title">Coming Up</span>
+                </div>
+                <div class="section-content" id="coming-up-content">
+                    <p class="no-tasks">No upcoming tasks</p>
+                </div>
+            </div>
+            
+            <!-- Overdue Section -->
+            <div class="dashboard-section" id="overdue-section" style="display: none;">
+                <div class="section-header">
+                    <span class="section-icon">⚠️</span>
+                    <span class="section-title">Overdue</span>
+                </div>
+                <div class="section-content" id="overdue-content">
+                    <p class="no-tasks">No overdue tasks</p>
+                </div>
+            </div>
+            
+            <!-- Completed Today Section -->
+            <div class="dashboard-section" id="completed-section" style="display: none;">
+                <div class="section-header">
+                    <span class="section-icon">✅</span>
+                    <span class="section-title">Completed Today</span>
+                </div>
+                <div class="section-content" id="completed-content">
+                    <p class="no-tasks">No completed tasks yet</p>
+                </div>
+            </div>
+        </div>
         
         <!-- Task Input Section -->
         <div class="task-input-section">

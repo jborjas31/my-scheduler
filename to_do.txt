@@ -1,0 +1,15 @@
+TO DO:
+1. Fix Cross-Midnight Scheduling Logic
+    Claude says: The main problem is in your time validation logic - when someone enters "11:30 PM" start and "2:30 AM" end, the app needs to recognize that the AM time refers to the next day, not earlier the same day.
+    Quick questions to help me understand the bug better:
+
+    When you create a cross-midnight task (like 11:30 PM to 2:30 AM), what does the app currently show for:
+
+    Duration calculation?
+    The time display in the schedule?
+
+
+    If you create that task and then check at midnight, does the dashboard show it as "Right Now" or does it disappear?
+    What time format are you usually entering - 12-hour (11:30 PM) or 24-hour (23:30)?
+
+    Once I understand exactly how the bug manifests, I can walk you through fixing the validateTaskTimes() function step-by-step. The fix will likely involve updating the logic to properly detect when an end time should be interpreted as "next day" rather than just comparing the raw minute values.

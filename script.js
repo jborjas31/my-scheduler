@@ -741,6 +741,210 @@ function updateScheduleDisplay(tasks) {
     });
 }
 
+function updateTaskDashboard(tasks) {
+    const now = new Date();
+    const isToday = getDateString(currentViewDate) === getDateString(now);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    // Initialize all sections
+    const rightNowContent = document.getElementById('right-now-content');
+    const comingUpContent = document.getElementById('coming-up-content');
+    const overdueContent = document.getElementById('overdue-content');
+    const completedContent = document.getElementById('completed-content');
+    
+    // Clear all sections to start fresh
+    if (rightNowContent) rightNowContent.innerHTML = '<p class="no-tasks">No current tasks</p>';
+    if (comingUpContent) comingUpContent.innerHTML = '<p class="no-tasks">No upcoming tasks</p>';
+    if (overdueContent) overdueContent.innerHTML = '<p class="no-tasks">No overdue tasks</p>';
+    if (completedContent) completedContent.innerHTML = '<p class="no-tasks">No completed tasks yet</p>';
+    
+    // Hide sections by default
+    const overdueSection = document.getElementById('overdue-section');
+    const completedSection = document.getElementById('completed-section');
+    if (overdueSection) overdueSection.style.display = 'none';
+    if (completedSection) completedSection.style.display = 'none';
+    
+    if (!isToday || tasks.length === 0) {
+        return; // Don't show dashboard info for other days or when no tasks
+    }
+    
+    // Categorize tasks
+    const rightNowTasks = [];
+    const comingUpTasks = [];
+    const overdueTasks = [];
+    const completedTasks = [];
+    
+    tasks.forEach(task => {
+        if (task.completed) {
+            completedTasks.push(task);
+            return;
+        }
+        
+        const taskStartTime = task.startTime;
+        const taskEndTime = task.endTime;
+        const taskCrossesMidnight = task.crossesMidnight || (taskEndTime <= taskStartTime);
+        
+        // Check if task is currently active (Right Now)
+        let isCurrentlyActive = false;
+        if (taskCrossesMidnight) {
+            // For cross-midnight tasks, check if current time is after start OR before end
+            isCurrentlyActive = (currentMinutes >= taskStartTime) || (currentMinutes <= taskEndTime);
+        } else {
+            // For regular tasks, check if current time is between start and end
+            isCurrentlyActive = (currentMinutes >= taskStartTime && currentMinutes < taskEndTime);
+        }
+        
+        if (isCurrentlyActive) {
+            rightNowTasks.push(task);
+            return;
+        }
+        
+        // Check if task is overdue (only for fixed tasks)
+        if (task.priority === 'fixed') {
+            let isOverdue = false;
+            if (taskCrossesMidnight) {
+                // For cross-midnight tasks, overdue if current time is after end time and before start time
+                isOverdue = (currentMinutes > taskEndTime && currentMinutes < taskStartTime);
+            } else {
+                // For regular tasks, overdue if current time is after end time
+                isOverdue = (currentMinutes >= taskEndTime);
+            }
+            
+            if (isOverdue) {
+                overdueTasks.push(task);
+                return;
+            }
+        }
+        
+        // Check if task is coming up (starts within next 3 hours)
+        const hoursUntilStart = taskCrossesMidnight 
+            ? (taskStartTime >= currentMinutes ? (taskStartTime - currentMinutes) : (24 * 60 - currentMinutes + taskStartTime))
+            : (taskStartTime - currentMinutes);
+        
+        if (hoursUntilStart > 0 && hoursUntilStart <= 180) { // 3 hours = 180 minutes
+            comingUpTasks.push({ ...task, hoursUntilStart });
+        }
+    });
+    
+    // Populate Right Now section
+    if (rightNowTasks.length > 0 && rightNowContent) {
+        rightNowContent.innerHTML = rightNowTasks.map(task => {
+            const priorityIcon = task.priority === 'fixed' ? '🔒' : '⏰';
+            const timeRange = formatTimeRange(task.startTime, task.endTime);
+            const crossMidnightIndicator = (task.crossesMidnight || task.endTime <= task.startTime) ? ' 🌙' : '';
+            
+            return `
+                <div class="dashboard-task current ${task.priority}">
+                    <div class="task-name">
+                        <span class="priority-badge">${priorityIcon}</span>
+                        ${task.name}
+                        ${crossMidnightIndicator}
+                    </div>
+                    <div class="task-time">${timeRange}</div>
+                    <div class="task-status">⚡ Active now - Focus on this!</div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // Populate Coming Up section
+    if (comingUpTasks.length > 0 && comingUpContent) {
+        // Sort by start time
+        comingUpTasks.sort((a, b) => a.hoursUntilStart - b.hoursUntilStart);
+        
+        comingUpContent.innerHTML = comingUpTasks.slice(0, 3).map(task => { // Show max 3 upcoming tasks
+            const priorityIcon = task.priority === 'fixed' ? '🔒' : '⏰';
+            const timeRange = formatTimeRange(task.startTime, task.endTime);
+            const crossMidnightIndicator = (task.crossesMidnight || task.endTime <= task.startTime) ? ' 🌙' : '';
+            
+            const hoursUntil = Math.floor(task.hoursUntilStart / 60);
+            const minutesUntil = Math.floor(task.hoursUntilStart % 60);
+            let timeUntilText = '';
+            if (hoursUntil > 0) {
+                timeUntilText = `in ${hoursUntil}h ${minutesUntil}m`;
+            } else {
+                timeUntilText = `in ${minutesUntil}m`;
+            }
+            
+            return `
+                <div class="dashboard-task ${task.priority}">
+                    <div class="task-name">
+                        <span class="priority-badge">${priorityIcon}</span>
+                        ${task.name}
+                        ${crossMidnightIndicator}
+                    </div>
+                    <div class="task-time">${timeRange}</div>
+                    <div class="task-status">📅 Starts ${timeUntilText}</div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // Populate Overdue section
+    if (overdueTasks.length > 0 && overdueContent && overdueSection) {
+        overdueSection.style.display = 'block';
+        
+        overdueContent.innerHTML = `
+            <div class="overdue-warning">
+                ⚠️ You have ${overdueTasks.length} overdue task${overdueTasks.length > 1 ? 's' : ''} that cannot be skipped!
+            </div>
+        ` + overdueTasks.map(task => {
+            const timeRange = formatTimeRange(task.startTime, task.endTime);
+            const crossMidnightIndicator = (task.crossesMidnight || task.endTime <= task.startTime) ? ' 🌙' : '';
+            
+            // Calculate how long overdue
+            const minutesOverdue = task.crossesMidnight 
+                ? (currentMinutes > task.endTime ? currentMinutes - task.endTime : 0)
+                : (currentMinutes - task.endTime);
+            
+            const hoursOverdue = Math.floor(minutesOverdue / 60);
+            const minsOverdue = minutesOverdue % 60;
+            let overdueText = '';
+            if (hoursOverdue > 0) {
+                overdueText = `${hoursOverdue}h ${minsOverdue}m overdue`;
+            } else {
+                overdueText = `${minsOverdue}m overdue`;
+            }
+            
+            return `
+                <div class="dashboard-task overdue fixed">
+                    <div class="task-name">
+                        <span class="priority-badge">🔒</span>
+                        ${task.name}
+                        ${crossMidnightIndicator}
+                    </div>
+                    <div class="task-time">${timeRange}</div>
+                    <div class="task-status">⏰ ${overdueText}</div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // Populate Completed section
+    if (completedTasks.length > 0 && completedContent && completedSection) {
+        completedSection.style.display = 'block';
+        
+        completedContent.innerHTML = completedTasks.map(task => {
+            const priorityIcon = task.priority === 'fixed' ? '🔒' : '⏰';
+            const timeRange = formatTimeRange(task.startTime, task.endTime);
+            const crossMidnightIndicator = (task.crossesMidnight || task.endTime <= task.startTime) ? ' 🌙' : '';
+            
+            return `
+                <div class="dashboard-task completed ${task.priority}">
+                    <div class="task-name">
+                        <span class="priority-badge">${priorityIcon}</span>
+                        ${task.name}
+                        <span class="completion-badge">✅</span>
+                        ${crossMidnightIndicator}
+                    </div>
+                    <div class="task-time">${timeRange}</div>
+                    <div class="task-status">🎉 Well done!</div>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
 // ============================================================================
 // TASK MANAGEMENT FUNCTIONS (Global scope for HTML onclick)
 // ============================================================================
@@ -1045,6 +1249,7 @@ async function loadTasks() {
         });
         
         updateScheduleDisplay(tasks);
+        updateTaskDashboard(tasks);
     } catch (error) {
         console.error('Error loading tasks:', error);
         showError('Failed to load tasks. Please check your internet connection.');
