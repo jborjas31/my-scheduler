@@ -23,6 +23,42 @@
     <meta name="keywords" content="scheduler, tasks, productivity, time management, daily planner">
 </head>
 <body>
+    <!-- Floating Navigation Banner -->
+    <div id="floating-banner" class="floating-banner">
+        <div class="floating-banner-content">
+            <!-- Desktop Layout -->
+            <div class="floating-banner-desktop">
+                <div class="floating-current-time">
+                    <span id="floating-current-time-display">Loading...</span>
+                </div>
+                <div class="floating-date-section">
+                    <button id="floating-prev-day-btn" class="floating-nav-btn" aria-label="Go to previous day">‹</button>
+                    <div class="floating-date-info">
+                        <span id="floating-current-date-display">Loading...</span>
+                        <input type="date" id="floating-date-picker" aria-label="Select date">
+                    </div>
+                    <button id="floating-next-day-btn" class="floating-nav-btn" aria-label="Go to next day">›</button>
+                </div>
+                <div class="floating-today-section">
+                    <button id="floating-today-btn" class="floating-today-btn">Today</button>
+                </div>
+            </div>
+            
+            <!-- Mobile Layout -->
+            <div class="floating-banner-mobile">
+                <div class="floating-mobile-row-1">
+                    <button id="floating-prev-day-btn-mobile" class="floating-nav-btn-mobile" aria-label="Go to previous day">‹</button>
+                    <span id="floating-current-date-display-mobile">Loading...</span>
+                    <button id="floating-next-day-btn-mobile" class="floating-nav-btn-mobile" aria-label="Go to next day">›</button>
+                </div>
+                <div class="floating-mobile-row-2">
+                    <span id="floating-current-time-display-mobile">Loading...</span>
+                    <input type="date" id="floating-date-picker-mobile" aria-label="Select date">
+                    <button id="floating-today-btn-mobile" class="floating-today-btn-mobile">Today</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <h1>My Daily Scheduler</h1>
     
     <div class="schedule-container">
@@ -179,5 +215,12 @@
             });
         }
     </script>
+
+    <!-- Scroll to top button -->
+    <button id="scroll-to-top-btn" class="scroll-to-top" aria-label="Scroll to top" title="Back to top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 14L12 9L17 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
 </body>
 </html>

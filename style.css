@@ -824,3 +824,370 @@ button[type="submit"] {
         font-size: 16px; /* Prevent zoom on iOS */
     }
 }
+
+/* Scroll to Top Button */
+.scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.scroll-to-top:hover {
+    background-color: #0056b3;
+    transform: translateY(0) scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+}
+
+.scroll-to-top:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.scroll-to-top.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-to-top svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .scroll-to-top {
+        width: 45px;
+        height: 45px;
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .scroll-to-top svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .scroll-to-top {
+        width: 40px;
+        height: 40px;
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .scroll-to-top svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* ============================================================================ */
+/* FLOATING BANNER STYLES */
+/* ============================================================================ */
+
+.floating-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001; /* Above everything else */
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+    height: 70px;
+}
+
+.floating-banner.show {
+    transform: translateY(0);
+}
+
+.floating-banner-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* Desktop Layout */
+.floating-banner-desktop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+}
+
+.floating-banner-mobile {
+    display: none;
+}
+
+.floating-current-time {
+    flex: 1;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.floating-date-section {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-width: 300px;
+}
+
+.floating-date-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 200px;
+}
+
+.floating-date-info span {
+    font-weight: 600;
+    color: #333;
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 200px;
+    word-wrap: break-word;
+}
+
+.floating-date-info input {
+    padding: 3px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 11px;
+    width: 110px;
+    background-color: white;
+}
+
+.floating-date-info input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 1px rgba(0,123,255,0.25);
+}
+
+.floating-today-section {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    min-width: 120px;
+}
+
+.floating-nav-btn {
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.floating-nav-btn:hover {
+    background-color: #1565c0;
+    transform: scale(1.05);
+}
+
+.floating-nav-btn:active {
+    transform: scale(0.95);
+}
+
+.floating-today-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.floating-today-btn:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.floating-today-btn:active {
+    transform: translateY(0);
+}
+
+/* Mobile Layout */
+@media (max-width: 768px) {
+    .floating-banner {
+        height: 90px;
+    }
+    
+    .floating-banner-desktop {
+        display: none;
+    }
+    
+    .floating-banner-mobile {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .floating-mobile-row-1,
+    .floating-mobile-row-2 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 35px;
+    }
+    
+    .floating-mobile-row-1 {
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .floating-mobile-row-1 span {
+        font-weight: 600;
+        color: #333;
+        font-size: 13px;
+        text-align: center;
+        flex: 1;
+        max-width: 200px;
+        word-wrap: break-word;
+        line-height: 1.2;
+    }
+    
+    .floating-nav-btn-mobile {
+        background-color: #1976d2;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    
+    .floating-nav-btn-mobile:hover {
+        background-color: #1565c0;
+    }
+    
+    .floating-mobile-row-2 span {
+        font-weight: 600;
+        color: #333;
+        font-size: 12px;
+        flex-shrink: 0;
+        min-width: 70px;
+    }
+    
+    .floating-mobile-row-2 input {
+        padding: 4px 6px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        font-size: 12px;
+        width: 100px;
+        background-color: white;
+        flex-shrink: 0;
+    }
+    
+    .floating-mobile-row-2 input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 1px rgba(0,123,255,0.25);
+    }
+    
+    .floating-today-btn-mobile {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    .floating-today-btn-mobile:hover {
+        background-color: #218838;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .floating-banner-content {
+        padding: 0 10px;
+    }
+    
+    .floating-mobile-row-1 {
+        gap: 10px;
+    }
+    
+    .floating-mobile-row-1 span {
+        font-size: 12px;
+    }
+    
+    .floating-mobile-row-2 span {
+        font-size: 11px;
+        min-width: 60px;
+    }
+    
+    .floating-mobile-row-2 input {
+        width: 90px;
+        font-size: 11px;
+    }
+    
+    .floating-today-btn-mobile {
+        padding: 3px 10px;
+        font-size: 10px;
+    }
+}
+
+/* Ensure floating banner doesn't interfere with existing content */
+body.floating-banner-visible {
+    /* Add top padding when banner is visible */
+    padding-top: 0; /* We don't need to push content down since banner is overlay */
+}

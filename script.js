@@ -571,6 +571,11 @@ function updateDateDisplay() {
     if (datePicker) {
         datePicker.value = getDateString(currentViewDate);
     }
+    
+    // Sync floating banner
+    if (floatingBannerController) {
+        floatingBannerController.sync();
+    }
 }
 
 function generateSchedule() {
@@ -648,7 +653,13 @@ function updateCurrentTime() {
     if (currentTimeDisplay) {
         currentTimeDisplay.textContent = timeString;
     }
+    
     highlightCurrentTimeSlot();
+    
+    // Sync floating banner time
+    if (floatingBannerController) {
+        floatingBannerController.sync();
+    }
 }
 
 function updateScheduleDisplay(tasks) {
@@ -1329,19 +1340,22 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
     
+    // Initialize floating banner
+    floatingBannerController = initializeFloatingBanner();
+    
     // Form event listener
     const taskForm = document.getElementById('task-form');
-if (taskForm) {
-    taskForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const taskName = document.getElementById('task-name')?.value || '';
-        const taskPriority = document.getElementById('task-priority')?.value || '';
-        
-        // The time values are now handled by the time pickers
-        addTask(taskName, null, null, taskPriority); // startTime and endTime parameters are now unused
-    });
-}
+    if (taskForm) {
+        taskForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const taskName = document.getElementById('task-name')?.value || '';
+            const taskPriority = document.getElementById('task-priority')?.value || '';
+            
+            // The time values are now handled by the time pickers
+            addTask(taskName, null, null, taskPriority); // startTime and endTime parameters are now unused
+        });
+    }
     
     // Navigation event listeners
     const prevBtn = document.getElementById('prev-day-btn');
@@ -1385,6 +1399,11 @@ if (taskForm) {
                 updateDateDisplay();
                 loadTasks();
                 
+                // Sync floating banner
+                if (floatingBannerController) {
+                    setTimeout(() => floatingBannerController.sync(), 100);
+                }
+                
             } catch (error) {
                 console.error('Date picker error:', error);
                 showError('Invalid date selected');
@@ -1396,4 +1415,225 @@ if (taskForm) {
     if (currentDateDisplay) {
         currentDateDisplay.addEventListener('dblclick', goToToday);
     }
+
+    initializeScrollToTop();
 });
+
+// ============================================================================
+// SCROLL TO TOP FUNCTIONALITY
+// ============================================================================
+
+function initializeScrollToTop() {
+    const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
+    
+    if (!scrollToTopBtn) return;
+    
+    // Show/hide button based on scroll position
+    function toggleScrollButton() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        if (scrollTop > 300) {
+            scrollToTopBtn.classList.add('show');
+        } else {
+            scrollToTopBtn.classList.remove('show');
+        }
+    }
+    
+    // Smooth scroll to top
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+    
+    // Event listeners
+    window.addEventListener('scroll', toggleScrollButton);
+    scrollToTopBtn.addEventListener('click', scrollToTop);
+    
+    // Initial check
+    toggleScrollButton();
+}
+
+// ============================================================================
+// FLOATING BANNER FUNCTIONALITY
+// ============================================================================
+
+function initializeFloatingBanner() {
+    const floatingBanner = document.getElementById('floating-banner');
+    
+    if (!floatingBanner) return;
+    
+    let isFloatingBannerVisible = false;
+    let scrollTimeout;
+    
+    // Show/hide banner based on scroll position
+    function toggleFloatingBanner() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const shouldShow = scrollTop > 200; // Show after scrolling 200px
+        
+        if (shouldShow && !isFloatingBannerVisible) {
+            floatingBanner.classList.add('show');
+            document.body.classList.add('floating-banner-visible');
+            isFloatingBannerVisible = true;
+            
+            // Update floating banner content when it becomes visible
+            updateFloatingBannerContent();
+        } else if (!shouldShow && isFloatingBannerVisible) {
+            floatingBanner.classList.remove('show');
+            document.body.classList.remove('floating-banner-visible');
+            isFloatingBannerVisible = false;
+        }
+    }
+    
+    // Throttled scroll handler for better performance
+    function handleScroll() {
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+        
+        scrollTimeout = setTimeout(toggleFloatingBanner, 10);
+    }
+    
+    // Update floating banner content to match main navigation
+    function updateFloatingBannerContent() {
+        // Update date displays
+        const mainDateDisplay = document.getElementById('current-date-display');
+        const floatingDateDisplayDesktop = document.getElementById('floating-current-date-display');
+        const floatingDateDisplayMobile = document.getElementById('floating-current-date-display-mobile');
+        
+        if (mainDateDisplay) {
+            const dateText = mainDateDisplay.textContent;
+            if (floatingDateDisplayDesktop) floatingDateDisplayDesktop.textContent = dateText;
+            if (floatingDateDisplayMobile) floatingDateDisplayMobile.textContent = dateText;
+        }
+        
+        // Update time displays
+        const mainTimeDisplay = document.getElementById('current-time-display');
+        const floatingTimeDisplayDesktop = document.getElementById('floating-current-time-display');
+        const floatingTimeDisplayMobile = document.getElementById('floating-current-time-display-mobile');
+        
+        if (mainTimeDisplay) {
+            const timeText = mainTimeDisplay.textContent;
+            if (floatingTimeDisplayDesktop) floatingTimeDisplayDesktop.textContent = timeText;
+            if (floatingTimeDisplayMobile) floatingTimeDisplayMobile.textContent = timeText;
+        }
+        
+        // Update date pickers
+        const mainDatePicker = document.getElementById('date-picker');
+        const floatingDatePickerDesktop = document.getElementById('floating-date-picker');
+        const floatingDatePickerMobile = document.getElementById('floating-date-picker-mobile');
+        
+        if (mainDatePicker) {
+            const pickerValue = mainDatePicker.value;
+            if (floatingDatePickerDesktop) floatingDatePickerDesktop.value = pickerValue;
+            if (floatingDatePickerMobile) floatingDatePickerMobile.value = pickerValue;
+        }
+    }
+    
+    // Sync floating banner when main content updates
+    function syncFloatingBanner() {
+        if (isFloatingBannerVisible) {
+            updateFloatingBannerContent();
+        }
+    }
+    
+    // Event listeners for floating banner buttons
+    function setupFloatingBannerEvents() {
+        // Desktop buttons
+        const floatingPrevBtn = document.getElementById('floating-prev-day-btn');
+        const floatingNextBtn = document.getElementById('floating-next-day-btn');
+        const floatingTodayBtn = document.getElementById('floating-today-btn');
+        const floatingDatePicker = document.getElementById('floating-date-picker');
+        
+        // Mobile buttons
+        const floatingPrevBtnMobile = document.getElementById('floating-prev-day-btn-mobile');
+        const floatingNextBtnMobile = document.getElementById('floating-next-day-btn-mobile');
+        const floatingTodayBtnMobile = document.getElementById('floating-today-btn-mobile');
+        const floatingDatePickerMobile = document.getElementById('floating-date-picker-mobile');
+        
+        // Desktop event listeners
+        if (floatingPrevBtn) {
+            floatingPrevBtn.addEventListener('click', () => {
+                goToPreviousDay();
+                setTimeout(syncFloatingBanner, 100);
+            });
+        }
+        
+        if (floatingNextBtn) {
+            floatingNextBtn.addEventListener('click', () => {
+                goToNextDay();
+                setTimeout(syncFloatingBanner, 100);
+            });
+        }
+        
+        if (floatingTodayBtn) {
+            floatingTodayBtn.addEventListener('click', () => {
+                goToToday();
+                setTimeout(syncFloatingBanner, 100);
+            });
+        }
+        
+        if (floatingDatePicker) {
+            floatingDatePicker.addEventListener('change', (e) => {
+                // Update main date picker and trigger its change event
+                const mainDatePicker = document.getElementById('date-picker');
+                if (mainDatePicker) {
+                    mainDatePicker.value = e.target.value;
+                    mainDatePicker.dispatchEvent(new Event('change'));
+                }
+                setTimeout(syncFloatingBanner, 100);
+            });
+        }
+        
+        // Mobile event listeners (same functionality)
+        if (floatingPrevBtnMobile) {
+            floatingPrevBtnMobile.addEventListener('click', () => {
+                goToPreviousDay();
+                setTimeout(syncFloatingBanner, 100);
+            });
+        }
+        
+        if (floatingNextBtnMobile) {
+            floatingNextBtnMobile.addEventListener('click', () => {
+                goToNextDay();
+                setTimeout(syncFloatingBanner, 100);
+            });
+        }
+        
+        if (floatingTodayBtnMobile) {
+            floatingTodayBtnMobile.addEventListener('click', () => {
+                goToToday();
+                setTimeout(syncFloatingBanner, 100);
+            });
+        }
+        
+        if (floatingDatePickerMobile) {
+            floatingDatePickerMobile.addEventListener('change', (e) => {
+                // Update main date picker and trigger its change event
+                const mainDatePicker = document.getElementById('date-picker');
+                if (mainDatePicker) {
+                    mainDatePicker.value = e.target.value;
+                    mainDatePicker.dispatchEvent(new Event('change'));
+                }
+                setTimeout(syncFloatingBanner, 100);
+            });
+        }
+    }
+    
+    // Initialize everything
+    window.addEventListener('scroll', handleScroll);
+    setupFloatingBannerEvents();
+    
+    // Initial check
+    toggleFloatingBanner();
+    
+    // Return sync function for use by other parts of the app
+    return {
+        sync: syncFloatingBanner,
+        updateContent: updateFloatingBannerContent
+    };
+}
+
+// Global floating banner controller
+let floatingBannerController;

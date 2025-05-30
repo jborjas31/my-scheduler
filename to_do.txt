@@ -1,4 +1,6 @@
 TO DO:
+1. Multi-hour tasks don't span the corresponding hours on the schedule grid.
+
 1. Fix Cross-Midnight Scheduling Logic
     Claude says: The main problem is in your time validation logic - when someone enters "11:30 PM" start and "2:30 AM" end, the app needs to recognize that the AM time refers to the next day, not earlier the same day.
     Quick questions to help me understand the bug better:
@@ -13,3 +15,14 @@ TO DO:
     What time format are you usually entering - 12-hour (11:30 PM) or 24-hour (23:30)?
 
     Once I understand exactly how the bug manifests, I can walk you through fixing the validateTaskTimes() function step-by-step. The fix will likely involve updating the logic to properly detect when an end time should be interpreted as "next day" rather than just comparing the raw minute values.
+
+2. Quick Add Task functionality
+    Quick Add Task functionality should allow user to quickly add a task name and notes (optional) that can be scheduled in the moment or left pending.
+
+3. Add "Recurring" functionality
+    Daily, Weekly, Monthly (what about days ), Yearly
+
+4. Add location field
+    Implement a rudimentary way for the web app to calculate time between tasks at different locations
+
+    
