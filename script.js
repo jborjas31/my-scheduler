@@ -581,30 +581,54 @@ function updateDateDisplay() {
 function generateSchedule() {
     const scheduleGrid = document.querySelector('.schedule-grid');
     
-    if (scheduleGrid) scheduleGrid.innerHTML = '';
+    if (!scheduleGrid) return;
     
-    // Generate hourly time slots for display
+    // Clear existing content
+    scheduleGrid.innerHTML = '';
+    
+    // Create time labels column
+    const timeLabelsColumn = document.createElement('div');
+    timeLabelsColumn.className = 'time-labels-column';
+    
+    // Generate hourly time labels
     for (let hour = SCHEDULE_START_HOUR; hour <= SCHEDULE_END_HOUR; hour++) {
-        if (scheduleGrid) {
-            const timeSlot = document.createElement('div');
-            timeSlot.className = 'time-slot';
-            timeSlot.setAttribute('data-hour', hour);
-            
-            const timeLabel = document.createElement('div');
-            timeLabel.className = 'time-label';
-            timeLabel.textContent = formatHour(hour);
-            
-            const taskArea = document.createElement('div');
-            taskArea.className = 'task-area';
-            taskArea.textContent = 'No tasks scheduled';
-            
-            timeSlot.appendChild(timeLabel);
-            timeSlot.appendChild(taskArea);
-            scheduleGrid.appendChild(timeSlot);
-        }
+        const timeLabel = document.createElement('div');
+        timeLabel.className = 'time-label-item';
+        timeLabel.setAttribute('data-hour', hour);
+        timeLabel.textContent = formatHour(hour);
+        timeLabelsColumn.appendChild(timeLabel);
     }
     
-    // Initialize custom time pickers (remove the old dropdown population code)
+    // Create tasks canvas
+    const tasksCanvas = document.createElement('div');
+    tasksCanvas.className = 'tasks-canvas';
+    
+    // Add hour grid lines to canvas
+    for (let hour = SCHEDULE_START_HOUR; hour <= SCHEDULE_END_HOUR; hour++) {
+        const hourLine = document.createElement('div');
+        hourLine.className = 'hour-line';
+        hourLine.style.top = `${hour * 60}px`; // 1 pixel per minute
+        hourLine.setAttribute('data-hour', hour);
+        tasksCanvas.appendChild(hourLine);
+    }
+    
+    // Add current time line if viewing today
+    const today = new Date();
+    const isToday = getDateString(currentViewDate) === getDateString(today);
+    if (isToday) {
+        const currentMinutes = today.getHours() * 60 + today.getMinutes();
+        const currentTimeLine = document.createElement('div');
+        currentTimeLine.className = 'current-time-line';
+        currentTimeLine.id = 'current-time-line';
+        currentTimeLine.style.top = `${currentMinutes}px`;
+        tasksCanvas.appendChild(currentTimeLine);
+    }
+    
+    // Append columns to schedule grid
+    scheduleGrid.appendChild(timeLabelsColumn);
+    scheduleGrid.appendChild(tasksCanvas);
+    
+    // Initialize custom time pickers
     initializeTimePickers();
 }
 
@@ -656,6 +680,9 @@ function updateCurrentTime() {
     
     highlightCurrentTimeSlot();
     
+    // Update current time line position
+    updateCurrentTimeLine();
+    
     // Sync floating banner time
     if (floatingBannerController) {
         floatingBannerController.sync();
@@ -663,93 +690,219 @@ function updateCurrentTime() {
 }
 
 function updateScheduleDisplay(tasks) {
+    const tasksCanvas = document.querySelector('.tasks-canvas');
+    
+    if (!tasksCanvas) return;
+    
+    // Remove existing task blocks (keep grid lines and current time line)
+    const existingTasks = tasksCanvas.querySelectorAll('.task-block');
+    existingTasks.forEach(task => task.remove());
+    
+    if (tasks.length === 0) return;
+    
+    // Update current time line if viewing today
+    updateCurrentTimeLine();
+    
+    // Detect overlaps and group overlapping tasks
+    const overlapGroups = detectTaskOverlaps(tasks);
+    
+    // Position and display each task
+    overlapGroups.forEach(group => {
+        positionTaskGroup(group, tasksCanvas);
+    });
+}
+
+// Helper function to update current time line
+function updateCurrentTimeLine() {
+    const today = new Date();
+    const isToday = getDateString(currentViewDate) === getDateString(today);
+    const currentTimeLine = document.getElementById('current-time-line');
+    
+    if (isToday && currentTimeLine) {
+        const currentMinutes = today.getHours() * 60 + today.getMinutes();
+        currentTimeLine.style.top = `${currentMinutes}px`;
+        currentTimeLine.style.display = 'block';
+    } else if (currentTimeLine) {
+        currentTimeLine.style.display = 'none';
+    }
+}
+
+// Helper function to detect overlapping tasks
+function detectTaskOverlaps(tasks) {
+    const groups = [];
+    const processed = new Set();
+    
+    tasks.forEach((task, index) => {
+        if (processed.has(index)) return;
+        
+        const group = [task];
+        processed.add(index);
+        
+        // Find all tasks that overlap with this one
+        for (let i = index + 1; i < tasks.length; i++) {
+            if (processed.has(i)) continue;
+            
+            const otherTask = tasks[i];
+            if (tasksOverlap(task, otherTask)) {
+                group.push(otherTask);
+                processed.add(i);
+            }
+        }
+        
+        groups.push(group);
+    });
+    
+    return groups;
+}
+
+// Helper function to check if two tasks overlap
+function tasksOverlap(task1, task2) {
+    const start1 = task1.startTime;
+    const end1 = task1.endTime;
+    const start2 = task2.startTime;
+    const end2 = task2.endTime;
+    
+    const crosses1 = task1.crossesMidnight || (end1 <= start1);
+    const crosses2 = task2.crossesMidnight || (end2 <= start2);
+    
+    if (!crosses1 && !crosses2) {
+        // Neither task crosses midnight
+        return (start1 < end2 && end1 > start2);
+    }
+    
+    if (crosses1 && !crosses2) {
+        // Only task1 crosses midnight
+        return (start1 <= end2 || end1 >= start2);
+    }
+    
+    if (!crosses1 && crosses2) {
+        // Only task2 crosses midnight
+        return (start2 <= end1 || end2 >= start1);
+    }
+    
+    // Both tasks cross midnight - they always overlap
+    return true;
+}
+
+// Helper function to position a group of overlapping tasks
+function positionTaskGroup(taskGroup, container) {
+    const groupSize = taskGroup.length;
+    
+    taskGroup.forEach((task, index) => {
+        const taskBlock = createTaskBlock(task, groupSize, index);
+        container.appendChild(taskBlock);
+    });
+}
+
+// Helper function to create a task block element
+function createTaskBlock(task, overlapCount, overlapIndex) {
+    const taskBlock = document.createElement('div');
+    taskBlock.className = 'task-block';
+    taskBlock.setAttribute('data-task-id', task.id);
+    
+    // Add priority class
+    taskBlock.classList.add(task.priority);
+    
+    // Add completion class
+    if (task.completed) {
+        taskBlock.classList.add('completed');
+    }
+    
+    // Check if task is overdue
     const now = new Date();
     const isToday = getDateString(currentViewDate) === getDateString(now);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     
-    // Clear all task areas first
-    const taskAreas = document.querySelectorAll('.task-area');
-    taskAreas.forEach(area => {
-        area.innerHTML = 'No tasks scheduled';
-        area.style.color = '#666';
-    });
-    
-    const timeSlots = document.querySelectorAll('.time-slot');
-    timeSlots.forEach(slot => {
-        slot.classList.remove('overdue-task');
-    });
-    
-    // Group tasks by starting hour for display
-    const tasksByHour = {};
-    
-    tasks.forEach(task => {
-        const startHour = Math.floor(task.startTime / 60);
-        if (!tasksByHour[startHour]) {
-            tasksByHour[startHour] = [];
+    if (isToday && task.priority === 'fixed' && !task.completed) {
+        let isOverdue = false;
+        if (task.crossesMidnight || task.endTime <= task.startTime) {
+            isOverdue = currentMinutes > task.endTime && currentMinutes < 12 * 60;
+        } else {
+            isOverdue = currentMinutes > task.endTime;
         }
-        tasksByHour[startHour].push(task);
-    });
-    
-    // Display tasks in their starting hour slots
-    Object.keys(tasksByHour).forEach(hour => {
-        const hourTasks = tasksByHour[hour];
-        const timeSlot = document.querySelector(`[data-hour="${hour}"]`);
         
-        if (timeSlot) {
-            const taskArea = timeSlot.querySelector('.task-area');
-            let taskHTML = '';
-            
-            hourTasks.forEach(task => {
-                const priorityLabel = task.priority === 'fixed' ? '🔒' : '⏰';
-                const completionStatus = task.completed ? '✅' : '⭕';
-                
-                const timeDisplay = formatTimeRange(task.startTime, task.endTime);
-                const crossMidnightIndicator = (task.crossesMidnight || task.endTime <= task.startTime) ? ' 🌙' : '';
-                
-                let isOverdue = false;
-                if (isToday && task.priority === 'fixed' && !task.completed) {
-                    if (task.crossesMidnight || task.endTime <= task.startTime) {
-                        isOverdue = currentMinutes > task.endTime && currentMinutes < 12 * 60;
-                    } else {
-                        isOverdue = currentMinutes > task.endTime;
-                    }
-                }
-                
-                let overdueLabel = '';
-                if (isOverdue) {
-                    overdueLabel = '<span class="overdue-label">OVERDUE</span>';
-                    timeSlot.classList.add('overdue-task');
-                }
-                
-                const escapedTaskName = task.name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                const jsEscapedName = task.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
-                
-                taskHTML += `
-                    <div style="margin-bottom: 8px; padding: 8px; border-left: 3px solid ${task.priority === 'fixed' ? '#d32f2f' : '#1976d2'}; background-color: ${task.completed ? '#f0f8f0' : '#f9f9f9'};">
-                        <div>${priorityLabel} <strong>${escapedTaskName}</strong> ${completionStatus} ${crossMidnightIndicator} ${overdueLabel}</div>
-                        <div style="font-size: 12px; color: #666; margin-top: 4px;">${timeDisplay}</div>
-                        ${task.duration ? `<div style="font-size: 11px; color: #888; font-style: italic;">Duration: ${Math.floor(task.duration / 60)}h ${task.duration % 60}m</div>` : ''}
-                        <div style="margin-top: 6px;">
-                            <button onclick="toggleTaskCompletion('${task.id}')" style="padding: 2px 6px; font-size: 11px; margin-right: 4px; cursor: pointer;">
-                                ${task.completed ? 'Undo' : 'Done'}
-                            </button>
-                            <button onclick="editTask('${task.id}', '${jsEscapedName}', ${task.startTime}, ${task.endTime}, '${task.priority}')" style="padding: 2px 6px; font-size: 11px; background-color: #17a2b8; margin-right: 4px; cursor: pointer;">
-                                ✏️
-                            </button>
-                            <button onclick="deleteTask('${task.id}')" style="padding: 2px 6px; font-size: 11px; background-color: #dc3545; cursor: pointer;">
-                                ×
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            if (taskHTML) {
-                taskArea.innerHTML = taskHTML;
-                taskArea.style.color = '#333';
-            }
+        if (isOverdue) {
+            taskBlock.classList.add('overdue');
         }
+    }
+    
+    // Position the task block
+    const startTime = task.startTime;
+    const duration = task.duration || (task.crossesMidnight ? 
+        (24 * 60 - task.startTime) + task.endTime : 
+        task.endTime - task.startTime);
+
+    taskBlock.style.top = `${startTime}px`;
+    // Tasks now show their ACTUAL duration - no minimum height
+    taskBlock.style.height = `${Math.max(duration, 1)}px`; // Minimum 1px so it's visible
+
+    // Add class based on task size for smart content display
+    if (duration < 30) {
+        taskBlock.classList.add('task-tiny'); // Less than 30 minutes
+    } else if (duration < 60) {
+        taskBlock.classList.add('task-short'); // 30-60 minutes
+    } else if (duration < 120) {
+        taskBlock.classList.add('task-medium'); // 1-2 hours
+    } else {
+        taskBlock.classList.add('task-long'); // 2+ hours
+    }
+    
+    // Handle overlaps with new staggered system
+    if (overlapCount > 1) {
+        const maxOverlapGroups = 4; // Support up to 4 overlapping tasks
+        const actualOverlapCount = Math.min(overlapCount, maxOverlapGroups);
+        taskBlock.classList.add(`overlap-${actualOverlapCount}-${overlapIndex + 1}`);
+    }
+    
+    // Create task content
+    const priorityIcon = task.priority === 'fixed' ? '🔒' : '⏰';
+    const completionIcon = task.completed ? '✅' : '⭕';
+    const crossMidnightIcon = (task.crossesMidnight || task.endTime <= task.startTime) ? ' 🌙' : '';
+    
+    let overdueLabel = '';
+    if (taskBlock.classList.contains('overdue')) {
+        overdueLabel = '<span class="overdue-badge">OVERDUE</span>';
+    }
+    
+    const timeDisplay = formatTimeRange(task.startTime, task.endTime);
+
+    // Better duration formatting - always show duration
+    let durationText = '';
+    if (task.duration) {
+        const hours = Math.floor(task.duration / 60);
+        const minutes = task.duration % 60;
+        
+        if (hours === 0) {
+            durationText = `${minutes}m`; // Just "45m" for under 1 hour
+        } else if (minutes === 0) {
+            durationText = `${hours}h`; // Just "2h" for exact hours
+        } else {
+            durationText = `${hours}h ${minutes}m`; // "1h 30m" for mixed
+        }
+    }
+    
+    const escapedTaskName = task.name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const jsEscapedName = task.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    
+    taskBlock.innerHTML = `
+        <div class="task-content-simple">
+            <div class="task-name">
+                <span class="priority-icon">${priorityIcon}</span>
+                ${escapedTaskName}
+                ${completionIcon === '✅' ? '<span class="completion-icon">✓</span>' : ''}
+                ${overdueLabel}
+            </div>
+            <div class="task-time">${timeDisplay}</div>
+        </div>
+    `;
+
+    // Add click handler to open modal (we'll create this next)
+    taskBlock.style.cursor = 'pointer';
+    taskBlock.addEventListener('click', () => {
+        openTaskModal(task);
     });
+    
+    return taskBlock;
 }
 
 function updateTaskDashboard(tasks) {
@@ -1106,67 +1259,102 @@ window.deleteTask = async function(taskId) {
 };
 
 window.editTask = function(taskId, currentName, currentStartTime, currentEndTime, currentPriority) {
-    const startHour = Math.floor(currentStartTime / 60);
-    const timeSlot = document.querySelector(`[data-hour="${startHour}"]`);
+    // Find the actual task block element
+    const taskBlock = document.querySelector(`[data-task-id="${taskId}"]`);
     
-    if (timeSlot) {
-        const taskArea = timeSlot.querySelector('.task-area');
-        
-        let startTimeOptions = '';
-        for (let hour = SCHEDULE_START_HOUR; hour <= SCHEDULE_END_HOUR; hour++) {
-            for (let minute = 0; minute < 60; minute += 15) {
-                const timeValue = hour * 60 + minute;
-                const selected = timeValue === currentStartTime ? 'selected' : '';
-                startTimeOptions += `<option value="${timeValue}" ${selected}>${formatTimeFromMinutes(timeValue)}</option>`;
-            }
+    if (!taskBlock) {
+        showError('Task not found');
+        return;
+    }
+    
+    // Store original content for canceling
+    const originalContent = taskBlock.innerHTML;
+    taskBlock.setAttribute('data-original-content', originalContent);
+    
+    // Generate time options for dropdowns
+    let startTimeOptions = '';
+    let endTimeOptions = '';
+    
+    for (let hour = SCHEDULE_START_HOUR; hour <= SCHEDULE_END_HOUR; hour++) {
+        for (let minute = 0; minute < 60; minute += 15) {
+            const timeValue = hour * 60 + minute;
+            const timeText = formatTimeFromMinutes(timeValue);
+            
+            const startSelected = timeValue === currentStartTime ? 'selected' : '';
+            const endSelected = timeValue === currentEndTime ? 'selected' : '';
+            
+            startTimeOptions += `<option value="${timeValue}" ${startSelected}>${timeText}</option>`;
+            endTimeOptions += `<option value="${timeValue}" ${endSelected}>${timeText}</option>`;
         }
-        
-        let endTimeOptions = '';
-        for (let hour = SCHEDULE_START_HOUR; hour <= SCHEDULE_END_HOUR; hour++) {
-            for (let minute = 0; minute < 60; minute += 15) {
-                const timeValue = hour * 60 + minute;
-                const selected = timeValue === currentEndTime ? 'selected' : '';
-                endTimeOptions += `<option value="${timeValue}" ${selected}>${formatTimeFromMinutes(timeValue)}</option>`;
-            }
-        }
-        
-        const escapedName = currentName.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        
-        taskArea.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 2px solid #007bff; border-radius: 8px; background-color: #f8f9ff;">
-                <strong>Editing Task:</strong>
-                <input type="text" id="edit-name-${taskId}" value="${escapedName}" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                
-                <div style="display: flex; gap: 8px;">
-                    <div style="flex: 1;">
-                        <label style="font-size: 12px; font-weight: bold;">Start Time:</label>
-                        <select id="edit-start-time-${taskId}" style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
-                            ${startTimeOptions}
-                        </select>
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-size: 12px; font-weight: bold;">End Time:</label>
-                        <select id="edit-end-time-${taskId}" style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
-                            ${endTimeOptions}
-                        </select>
-                    </div>
-                </div>
-                
-                <div>
-                    <label style="font-size: 12px; font-weight: bold;">Priority:</label>
-                    <select id="edit-priority-${taskId}" style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;">
-                        <option value="fixed" ${currentPriority === 'fixed' ? 'selected' : ''}>🔒 Cannot Skip (Fixed)</option>
-                        <option value="flexible" ${currentPriority === 'flexible' ? 'selected' : ''}>⏰ Can Skip (Flexible)</option>
+    }
+    
+    const escapedName = currentName.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    
+    // Replace task content with edit form
+    taskBlock.innerHTML = `
+        <div class="task-edit-form">
+            <div style="margin-bottom: 8px;">
+                <strong style="color: #007bff;">✏️ Editing Task</strong>
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+                <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 2px;">Task Name:</label>
+                <input type="text" id="edit-name-${taskId}" value="${escapedName}" 
+                       style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;">
+            </div>
+            
+            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 10px; font-weight: bold; margin-bottom: 2px;">Start:</label>
+                    <select id="edit-start-time-${taskId}" 
+                            style="width: 100%; padding: 3px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                        ${startTimeOptions}
                     </select>
                 </div>
-                
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="saveTaskEdit('${taskId}')" style="flex: 1; padding: 8px; font-size: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Changes</button>
-                    <button onclick="cancelTaskEdit()" style="flex: 1; padding: 8px; font-size: 12px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 10px; font-weight: bold; margin-bottom: 2px;">End:</label>
+                    <select id="edit-end-time-${taskId}" 
+                            style="width: 100%; padding: 3px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                        ${endTimeOptions}
+                    </select>
                 </div>
             </div>
-        `;
-    }
+            
+            <div style="margin-bottom: 8px;">
+                <label style="display: block; font-size: 10px; font-weight: bold; margin-bottom: 2px;">Priority:</label>
+                <select id="edit-priority-${taskId}" 
+                        style="width: 100%; padding: 3px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                    <option value="fixed" ${currentPriority === 'fixed' ? 'selected' : ''}>🔒 Fixed</option>
+                    <option value="flexible" ${currentPriority === 'flexible' ? 'selected' : ''}>⏰ Flexible</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 4px;">
+                <button onclick="saveTaskEdit('${taskId}')" 
+                        style="flex: 1; padding: 6px; font-size: 10px; background-color: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                    💾 Save
+                </button>
+                <button onclick="cancelTaskEdit('${taskId}')" 
+                        style="flex: 1; padding: 6px; font-size: 10px; background-color: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                    ❌ Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Add special styling to indicate editing mode
+    taskBlock.style.backgroundColor = '#fff8e1';
+    taskBlock.style.border = '2px solid #ffc107';
+    taskBlock.style.zIndex = '100';
+    
+    // Focus on the name input
+    setTimeout(() => {
+        const nameInput = document.getElementById(`edit-name-${taskId}`);
+        if (nameInput) {
+            nameInput.focus();
+            nameInput.select();
+        }
+    }, 100);
 };
 
 window.saveTaskEdit = async function(taskId) {
@@ -1216,8 +1404,21 @@ window.saveTaskEdit = async function(taskId) {
     }
 };
 
-window.cancelTaskEdit = function() {
-    loadTasks();
+window.cancelTaskEdit = function(taskId) {
+    const taskBlock = document.querySelector(`[data-task-id="${taskId}"]`);
+    
+    if (taskBlock) {
+        const originalContent = taskBlock.getAttribute('data-original-content');
+        if (originalContent) {
+            taskBlock.innerHTML = originalContent;
+            taskBlock.removeAttribute('data-original-content');
+            
+            // Remove edit styling
+            taskBlock.style.backgroundColor = '';
+            taskBlock.style.border = '';
+            taskBlock.style.zIndex = '';
+        }
+    }
 };
 
 // ============================================================================
@@ -1637,3 +1838,192 @@ function initializeFloatingBanner() {
 
 // Global floating banner controller
 let floatingBannerController;
+
+// ============================================================================
+// TASK MODAL FUNCTIONS
+// ============================================================================
+
+function openTaskModal(task) {
+    // Remove any existing modal
+    const existingModal = document.getElementById('task-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.id = 'task-modal';
+    modalOverlay.className = 'modal-overlay';
+    
+    // Calculate task duration display
+    let durationText = '';
+    if (task.duration) {
+        const hours = Math.floor(task.duration / 60);
+        const minutes = task.duration % 60;
+        
+        if (hours === 0) {
+            durationText = `${minutes} minutes`;
+        } else if (minutes === 0) {
+            durationText = `${hours} hour${hours > 1 ? 's' : ''}`;
+        } else {
+            durationText = `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minutes`;
+        }
+    }
+    
+    const timeRange = formatTimeRange(task.startTime, task.endTime);
+    const priorityText = task.priority === 'fixed' ? '🔒 Cannot Skip (Fixed)' : '⏰ Can Skip (Flexible)';
+    const crossMidnightText = (task.crossesMidnight || task.endTime <= task.startTime) ? 
+        '<div class="modal-info-item"><span class="modal-label">Special:</span> This task crosses midnight 🌙</div>' : '';
+    
+    // Check if task is overdue
+    const now = new Date();
+    const isToday = getDateString(currentViewDate) === getDateString(now);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    let overdueText = '';
+    
+    if (isToday && task.priority === 'fixed' && !task.completed) {
+        let isOverdue = false;
+        if (task.crossesMidnight || task.endTime <= task.startTime) {
+            isOverdue = currentMinutes > task.endTime && currentMinutes < 12 * 60;
+        } else {
+            isOverdue = currentMinutes > task.endTime;
+        }
+        
+        if (isOverdue) {
+            const minutesOverdue = task.crossesMidnight 
+                ? (currentMinutes > task.endTime ? currentMinutes - task.endTime : 0)
+                : (currentMinutes - task.endTime);
+            
+            const hoursOverdue = Math.floor(minutesOverdue / 60);
+            const minsOverdue = minutesOverdue % 60;
+            let overdueTime = '';
+            if (hoursOverdue > 0) {
+                overdueTime = `${hoursOverdue}h ${minsOverdue}m`;
+            } else {
+                overdueTime = `${minsOverdue}m`;
+            }
+            
+            overdueText = `<div class="modal-overdue-warning">⚠️ This task is ${overdueTime} overdue!</div>`;
+        }
+    }
+    
+    // Escape HTML in task name
+    const escapedTaskName = task.name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">${escapedTaskName}</h3>
+                <button class="modal-close" onclick="closeTaskModal()" aria-label="Close modal">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                ${overdueText}
+                
+                <div class="modal-info">
+                    <div class="modal-info-item">
+                        <span class="modal-label">Time:</span> ${timeRange}
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Duration:</span> ${durationText}
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Priority:</span> ${priorityText}
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Status:</span> ${task.completed ? '✅ Completed' : '⭕ Not completed'}
+                    </div>
+                    ${crossMidnightText}
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <div class="modal-actions">
+                    <button class="modal-btn modal-btn-primary" onclick="toggleTaskFromModal('${task.id}', ${task.completed})">
+                        ${task.completed ? '↩️ Mark Incomplete' : '✅ Mark Complete'}
+                    </button>
+                    <button class="modal-btn modal-btn-secondary" onclick="editTaskFromModal('${task.id}', '${task.name.replace(/'/g, "\\'")}', ${task.startTime}, ${task.endTime}, '${task.priority}')">
+                        ✏️ Edit Task
+                    </button>
+                    <button class="modal-btn modal-btn-danger" onclick="deleteTaskFromModal('${task.id}')">
+                        🗑️ Delete Task
+                    </button>
+                </div>
+                <button class="modal-btn modal-btn-cancel" onclick="closeTaskModal()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.appendChild(modalOverlay);
+    
+    // Add click outside to close
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            closeTaskModal();
+        }
+    });
+    
+    // Add escape key to close
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeTaskModal();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Focus trap for accessibility
+    const modal = modalOverlay.querySelector('.modal-content');
+    const focusableElements = modal.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    
+    if (firstElement) {
+        firstElement.focus();
+    }
+    
+    modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+    });
+}
+
+function closeTaskModal() {
+    const modal = document.getElementById('task-modal');
+    if (modal) {
+        modal.classList.add('modal-closing');
+        setTimeout(() => {
+            modal.remove();
+        }, 150);
+    }
+}
+
+// Modal action functions
+window.toggleTaskFromModal = async function(taskId, currentStatus) {
+    closeTaskModal();
+    await toggleTaskCompletion(taskId);
+};
+
+window.editTaskFromModal = function(taskId, currentName, currentStartTime, currentEndTime, currentPriority) {
+    closeTaskModal();
+    editTask(taskId, currentName, currentStartTime, currentEndTime, currentPriority);
+};
+
+window.deleteTaskFromModal = async function(taskId) {
+    closeTaskModal();
+    await deleteTask(taskId);
+};

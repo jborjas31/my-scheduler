@@ -1,3 +1,7 @@
+#######################################
+DEVELOPMENT AND FEATURE IDEAS
+#######################################
+
 # Smart Secretary Feature - Summary & Implementation Plan
 
 ## 🎯 **Core Concept: Smart Focus Session Manager**
@@ -173,6 +177,47 @@ ideally, i should brush and floss twice a day. if i can't do that, then i should
 example 2:
 ideally, i should take all my meds and supplements. if i can't do that, then i should at least take the oral minoxidil meds.
 
---------------------------------------------------------
+----------------------------------------------------------
 #   Account for energy levels
-Schedule tasks
+Keep track of energy levels during the day and update tasks accordingly.
+
+----------------------------------------------------------
+Feature Summary: Flexible "Floating" Tasks
+Core Concept:
+Add a new task type called "Flexible Tasks" for short tasks that need to be completed within specific time constraints but don't have a fixed start time.
+Task Properties:
+
+Task Name: Description of what needs to be done
+Duration: How long the task takes (in minutes)
+Available Time Window: Earliest and latest times of day it can be done
+Deadline: Date by when the task must be completed
+Priority: Urgency level
+Task Type: "flexible" vs "fixed" (existing tasks)
+
+Example Use Case:
+Task: "Call doctor to cancel appointment"
+Duration: 10 minutes
+Available: 8:00 AM - 6:00 PM (business hours)
+Deadline: Must be done by Friday, May 31st
+Priority: High
+
+Desired Functionality:
+
+Gap Detection: App scans existing fixed schedule and identifies available time slots where the flexible task could fit
+Suggestions: Show user recommended time slots that meet all constraints
+Dashboard: Display all pending flexible tasks with deadlines
+Manual Placement: User can select from suggested slots or manually place the task
+
+Implementation Approach:
+
+Start with Option 1: Simple Gap-Finder
+Add new form fields for flexible task creation
+Create algorithm to find gaps between fixed tasks
+Display flexible tasks in a separate dashboard section
+Show suggested available time slots
+
+Database Changes:
+Add fields for taskType, duration, earliestTime, latestTime, deadline to existing task structure.
+This feature would help users efficiently schedule small, necessary tasks without having to manually find available time slots in their busy schedules.
+
+----------------------------------------------------------
