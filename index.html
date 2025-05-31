@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>My Daily Scheduler</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="./assets/manifest-BUhHLWX1.json">
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Scheduler">
+    
+    <!-- Favicon and icons -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzAwN2JmZiIvPgo8cGF0aCBkPSJNOCAxMkgyNFYxNEg4VjEyWk04IDhIMjRWMTBIOFY4Wk04IDE2SDI0VjE4SDhWMTZaTTYgOFYxMEg3VjhINlpNNiAxMlYxNEg3VjEySDZaTTYgMTZWMThIN1YxNkg2WiIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4K">
+    
+    <!-- Styles -->
+    
+    <!-- Meta tags for SEO and sharing -->
+    <meta name="description" content="A daily task scheduling app to help with time management and productivity">
+    <meta name="keywords" content="scheduler, tasks, productivity, time management, daily planner">
+  <link rel="stylesheet" crossorigin href="./assets/index-AmnP-sVC.css">
+</head>
+<body>
+    <!-- Floating Navigation Banner -->
+    <div id="floating-banner" class="floating-banner">
+        <div class="floating-banner-content">
+            <!-- Desktop Layout -->
+            <div class="floating-banner-desktop">
+                <div class="floating-current-time">
+                    <span id="floating-current-time-display">Loading...</span>
+                </div>
+                <div class="floating-date-section">
+                    <button id="floating-prev-day-btn" class="floating-nav-btn" aria-label="Go to previous day">‹</button>
+                    <div class="floating-date-info">
+                        <span id="floating-current-date-display">Loading...</span>
+                        <input type="date" id="floating-date-picker" aria-label="Select date">
+                    </div>
+                    <button id="floating-next-day-btn" class="floating-nav-btn" aria-label="Go to next day">›</button>
+                </div>
+                <div class="floating-today-section">
+                    <button id="floating-today-btn" class="floating-today-btn">Today</button>
+                </div>
+            </div>
+            
+            <!-- Mobile Layout -->
+            <div class="floating-banner-mobile">
+                <div class="floating-mobile-row-1">
+                    <button id="floating-prev-day-btn-mobile" class="floating-nav-btn-mobile" aria-label="Go to previous day">‹</button>
+                    <span id="floating-current-date-display-mobile">Loading...</span>
+                    <button id="floating-next-day-btn-mobile" class="floating-nav-btn-mobile" aria-label="Go to next day">›</button>
+                </div>
+                <div class="floating-mobile-row-2">
+                    <span id="floating-current-time-display-mobile">Loading...</span>
+                    <input type="date" id="floating-date-picker-mobile" aria-label="Select date">
+                    <button id="floating-today-btn-mobile" class="floating-today-btn-mobile">Today</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h1>My Daily Scheduler</h1>
+    
+    <div class="schedule-container">
+        <!-- Date Navigation -->
+        <div class="date-navigation">
+            <button id="prev-day-btn" class="nav-btn" aria-label="Go to previous day">← Previous Day</button>
+            <div class="date-display">
+                <h2 id="current-date-display">Loading...</h2>
+                <input type="date" id="date-picker" aria-label="Select date">
+                <button id="today-btn" class="today-btn">Today</button>
+            </div>
+            <button id="next-day-btn" class="nav-btn" aria-label="Go to next day">Next Day →</button>
+        </div>
+        
+        <!-- Current Time Display -->
+        <div class="current-time">
+            <strong>Current Time: <span id="current-time-display">Loading...</span></strong>
+        </div>
+
+        <!-- Task Dashboard -->
+        <div class="task-dashboard">
+            <h3>📋 Your Tasks Right Now</h3>
+            
+            <!-- Right Now Section -->
+            <div class="dashboard-section" id="right-now-section">
+                <div class="section-header">
+                    <span class="section-icon">🔴</span>
+                    <span class="section-title">Right Now</span>
+                </div>
+                <div class="section-content" id="right-now-content">
+                    <p class="no-tasks">No current tasks</p>
+                </div>
+            </div>
+            
+            <!-- Coming Up Section -->
+            <div class="dashboard-section" id="coming-up-section">
+                <div class="section-header">
+                    <span class="section-icon">⏰</span>
+                    <span class="section-title">Coming Up</span>
+                </div>
+                <div class="section-content" id="coming-up-content">
+                    <p class="no-tasks">No upcoming tasks</p>
+                </div>
+            </div>
+            
+            <!-- Overdue Section -->
+            <div class="dashboard-section" id="overdue-section" style="display: none;">
+                <div class="section-header">
+                    <span class="section-icon">⚠️</span>
+                    <span class="section-title">Overdue</span>
+                </div>
+                <div class="section-content" id="overdue-content">
+                    <p class="no-tasks">No overdue tasks</p>
+                </div>
+            </div>
+            
+            <!-- Completed Today Section -->
+            <div class="dashboard-section" id="completed-section" style="display: none;">
+                <div class="section-header">
+                    <span class="section-icon">✅</span>
+                    <span class="section-title">Completed Today</span>
+                </div>
+                <div class="section-content" id="completed-content">
+                    <p class="no-tasks">No completed tasks yet</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Task Input Section -->
+        <div class="task-input-section">
+            <h3>Add New Task</h3>
+            <form id="task-form" novalidate>
+                <div class="form-row">
+                    <label for="task-name">Task Name:</label>
+                    <input type="text" id="task-name" placeholder="Enter task name" required maxlength="100" autocomplete="off">
+                </div>
+                
+                <div class="form-row">
+                    <label for="task-start-time">Start Time:</label>
+                    <div class="custom-time-input">
+                        <input type="text" id="task-start-time" class="time-picker-input" placeholder="Select or type time" autocomplete="off">
+                        <div class="time-dropdown" id="start-time-dropdown">
+                            <!-- Options will be generated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label for="task-end-time">End Time:</label>
+                    <div class="custom-time-input">
+                        <input type="text" id="task-end-time" class="time-picker-input" placeholder="Select or type time" autocomplete="off">
+                        <div class="time-dropdown" id="end-time-dropdown">
+                            <!-- Options will be generated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <label for="task-priority">Priority:</label>
+                    <select id="task-priority" required>
+                        <option value="">Select priority...</option>
+                        <option value="fixed">🔒 Cannot Skip (Fixed)</option>
+                        <option value="flexible">⏰ Can Skip (Flexible)</option>
+                    </select>
+                </div>
+                
+                <button type="submit">Add Task</button>
+            </form>
+        </div>
+        
+        <!-- Schedule Grid -->
+        <div class="schedule-grid" role="main" aria-label="Daily schedule">
+            <div class="time-labels-column">
+                <!-- Time labels will be generated by JavaScript -->
+            </div>
+            <div class="tasks-canvas">
+                <!-- Task blocks will be positioned here by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Loading indicator -->
+        <div id="loading-indicator" style="display: none; text-align: center; padding: 20px;">
+            <p>Loading your schedule...</p>
+        </div>
+    </div>
+
+    <!-- Error messages -->
+    <div id="error-message" style="display: none; background-color: #f8d7da; color: #721c24; padding: 12px; margin: 10px 0; border-radius: 4px; border: 1px solid #f5c6cb;">
+        <strong>Error:</strong> <span id="error-text"></span>
+    </div>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Main application script -->
+    <script src="./js/script.js"></script>
+    
+    <!-- PWA installation prompt (optional) -->
+    <script>
+        // Simple PWA install prompt
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            deferredPrompt = e;
+            // Could show a custom install button here
+        });
+        
+        // Register service worker if available
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+
+    <!-- Scroll to top button -->
+    <button id="scroll-to-top-btn" class="scroll-to-top" aria-label="Scroll to top" title="Back to top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 14L12 9L17 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
+</body>
+</html>
