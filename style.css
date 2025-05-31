@@ -252,6 +252,45 @@ button[type="submit"] {
     z-index: 2;
 }
 
+/* Mobile-only time markers that float on the canvas */
+@media (max-width: 768px) {
+    .hour-line {
+        background-color: #ddd; /* Slightly more visible on mobile */
+    }
+    
+    /* Add floating time labels every 3 hours on mobile */
+    .hour-line[data-hour="0"]::after,
+    .hour-line[data-hour="3"]::after,
+    .hour-line[data-hour="6"]::after,
+    .hour-line[data-hour="9"]::after,
+    .hour-line[data-hour="12"]::after,
+    .hour-line[data-hour="15"]::after,
+    .hour-line[data-hour="18"]::after,
+    .hour-line[data-hour="21"]::after {
+        position: absolute;
+        left: 5px;
+        top: -8px;
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #555;
+        border: 1px solid #ccc;
+        z-index: 5;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .hour-line[data-hour="0"]::after { content: "12 AM"; }
+    .hour-line[data-hour="3"]::after { content: "3 AM"; }
+    .hour-line[data-hour="6"]::after { content: "6 AM"; }
+    .hour-line[data-hour="9"]::after { content: "9 AM"; }
+    .hour-line[data-hour="12"]::after { content: "12 PM"; }
+    .hour-line[data-hour="15"]::after { content: "3 PM"; }
+    .hour-line[data-hour="18"]::after { content: "6 PM"; }
+    .hour-line[data-hour="21"]::after { content: "9 PM"; }
+}
+
 /* Current time line (like Google Calendar) */
 .current-time-line {
     position: absolute;
@@ -836,7 +875,7 @@ button[type="submit"] {
     }
     
     .tasks-canvas {
-        min-height: 800px;
+        min-height: 1440px;
     }
     
     .date-navigation {
