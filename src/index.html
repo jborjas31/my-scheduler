@@ -6,7 +6,7 @@
     <title>My Daily Scheduler</title>
     
     <!-- PWA Configuration -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#007bff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,7 +16,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzAwN2JmZiIvPgo8cGF0aCBkPSJNOCAxMkgyNFYxNEg4VjEyWk04IDhIMjRWMTBIOFY4Wk04IDE2SDI0VjE4SDhWMTZaTTYgOFYxMEg3VjhINlpNNiAxMlYxNEg3VjEySDZaTTYgMTZWMThIN1YxNkg2WiIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4K">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./css/style.css">
     
     <!-- Meta tags for SEO and sharing -->
     <meta name="description" content="A daily task scheduling app to help with time management and productivity">
@@ -195,7 +195,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
     <!-- Main application script -->
-    <script src="script.js"></script>
+    <script src="./js/script.js"></script>
     
     <!-- PWA installation prompt (optional) -->
     <script>
@@ -210,7 +210,7 @@
         // Register service worker if available
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
+                navigator.serviceWorker.register('./service-worker.js')
                     .then((registration) => {
                         console.log('SW registered: ', registration);
                     })

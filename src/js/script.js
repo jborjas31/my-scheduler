@@ -1,4 +1,4 @@
-// Firebase configuration
+// Firebase configuration - hardcoded for GitHub Pages compatibility
 const firebaseConfig = {
   apiKey: "AIzaSyA0chYZcONeLq57IlskjBJMOx2zFSa8b4k",
   authDomain: "my-scheduler-8c394.firebaseapp.com",
@@ -7,6 +7,12 @@ const firebaseConfig = {
   messagingSenderId: "225852937709",
   appId: "1:225852937709:web:58ab245d40ddb19b3c03e4"
 };
+
+// Validate configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('Firebase configuration is missing.');
+  showError('Application configuration error. Please contact support.');
+}
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
@@ -227,8 +233,6 @@ function validateTaskTimes(startTime, endTime, taskDate) {
     };
 }
 
-// Add these functions to your script.js file (you can add them in the UTILITY FUNCTIONS section)
-
 // ============================================================================
 // CUSTOM TIME PICKER FUNCTIONS
 // ============================================================================
@@ -299,9 +303,6 @@ function initializeTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
             optionDiv.className = 'time-option';
             optionDiv.textContent = option.text;
             optionDiv.dataset.value = option.value;
-            
-            // REMOVE ALL CURRENT TIME HIGHLIGHTING
-            // No more current-time class added - all options look the same
             
             // Mark selected option only
             if (selectedValue !== null && option.value === selectedValue) {

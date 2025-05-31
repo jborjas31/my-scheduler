@@ -1,0 +1,58 @@
+{
+  "name": "my-daily-scheduler",
+  "version": "1.0.0",
+  "description": "A personal task scheduling web application for daily productivity management",
+  "main": "src/index.html",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && gh-pages -d dist",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "format": "prettier --write src/**/*.{js,css,html}",
+    "start": "npm run dev",
+    "clean": "rimraf dist"
+},
+  "keywords": [
+    "scheduler",
+    "productivity",
+    "task-management",
+    "pwa",
+    "firebase",
+    "web-app"
+  ],
+  "author": {
+    "name": "JJB",
+    "email": "yearmonthday365@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jborjas31/my-scheduler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jborjas31/my-scheduler/issues"
+  },
+  "homepage": "https://jborjas31.github.io/my-scheduler/",
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.0.0",
+    "gh-pages": "^6.0.0",
+    "rimraf": "^5.0.0"
+  },
+  "dependencies": {
+    "firebase": "^10.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

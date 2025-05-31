@@ -3,8 +3,8 @@ const CACHE_NAME = 'daily-scheduler-v1';
 const urlsToCache = [
     './',
     './index.html',
-    './style.css',
-    './script.js',
+    './css/style.css',
+    './js/script.js',
     './manifest.json',
     // Firebase scripts (these will be cached when first loaded)
     'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
