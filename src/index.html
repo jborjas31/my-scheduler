@@ -14,10 +14,7 @@
     
     <!-- Favicon and icons -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzAwN2JmZiIvPgo8cGF0aCBkPSJNOCAxMkgyNFYxNEg4VjEyWk04IDhIMjRWMTBIOFY4Wk04IDE2SDI0VjE4SDhWMTZaTTYgOFYxMEg3VjhINlpNNiAxMlYxNEg3VjEySDZaTTYgMTZWMThIN1YxNkg2WiIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4K">
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="./css/style.css">
-    
+        
     <!-- Meta tags for SEO and sharing -->
     <meta name="description" content="A daily task scheduling app to help with time management and productivity">
     <meta name="keywords" content="scheduler, tasks, productivity, time management, daily planner">
@@ -195,7 +192,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
     <!-- Main application script -->
-    <script src="./js/script.js"></script>
+    <script type="module" src="./js/script.js"></script>
     
     <!-- PWA installation prompt (optional) -->
     <script>
@@ -207,8 +204,8 @@
             // Could show a custom install button here
         });
         
-        // Register service worker if available
-        if ('serviceWorker' in navigator) {
+        // Register service worker only in production (not during development)
+        if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
                     .then((registration) => {
@@ -218,6 +215,9 @@
                         console.log('SW registration failed: ', registrationError);
                     });
             });
+        } else if ('serviceWorker' in navigator && window.location.hostname === 'localhost') {
+            // Optional: Register in localhost for testing, but with different behavior
+            console.log('Development mode: Service Worker not registered to avoid conflicts');
         }
     </script>
 

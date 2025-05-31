@@ -1,3 +1,5 @@
+import '../css/style.css';
+
 // Firebase configuration - hardcoded for GitHub Pages compatibility
 const firebaseConfig = {
   apiKey: "AIzaSyA0chYZcONeLq57IlskjBJMOx2zFSa8b4k",
