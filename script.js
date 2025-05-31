@@ -1483,45 +1483,124 @@ function goToNextDay() {
 }
 
 function goToToday() {
+    const today = new Date();
+    const wasAlreadyToday = getDateString(currentViewDate) === getDateString(today);
+    
     currentViewDate = new Date();
     updateDateDisplay();
-    loadTasks();
     
-    // Scroll to current time after a short delay to ensure DOM is updated
-    setTimeout(() => {
-        scrollToCurrentTime();
-    }, 300);
+    if (!wasAlreadyToday) {
+        // If we weren't viewing today, load tasks first then scroll
+        loadTasks();
+        setTimeout(() => {
+            scrollToCurrentTime();
+        }, 500); // Longer delay to ensure tasks are loaded
+    } else {
+        // If we were already viewing today, just scroll immediately
+        // This fixes the issue when clicking "Today" while already on today
+        setTimeout(() => {
+            scrollToCurrentTime();
+        }, 100); // Short delay for smooth animation
+    }
 }
 
 function scrollToCurrentTime() {
     const now = new Date();
     const currentHour = now.getHours();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
     
-    // Find the time slot for the current hour
-    const currentTimeSlot = document.querySelector(`[data-hour="${currentHour}"]`);
+    // First, try to use the current time line if it exists (more precise)
+    const currentTimeLine = document.getElementById('current-time-line');
+    const isToday = getDateString(currentViewDate) === getDateString(now);
     
-    if (currentTimeSlot) {
-        // Smooth scroll to the current time slot and center it
-        currentTimeSlot.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
+    if (isToday && currentTimeLine) {
+        // Use the current time line for precise scrolling
+        const rect = currentTimeLine.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const targetPosition = rect.top + scrollTop;
+        
+        // Calculate offset to center the line on screen
+        const windowHeight = window.innerHeight;
+        const offsetPosition = Math.max(0, targetPosition - (windowHeight / 2));
+        
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
         });
         
-        // Add a subtle highlight effect to draw attention
-        currentTimeSlot.style.transition = 'background-color 0.6s ease';
-        const originalBackground = currentTimeSlot.style.backgroundColor;
-        
-        // Briefly highlight the current time slot
-        currentTimeSlot.style.backgroundColor = '#e3f2fd';
+        // Add a visual pulse effect to the current time line
+        currentTimeLine.style.transition = 'all 0.6s ease';
+        currentTimeLine.style.transform = 'scaleY(2)';
+        currentTimeLine.style.boxShadow = '0 0 10px rgba(234, 67, 53, 0.6)';
         
         setTimeout(() => {
-            currentTimeSlot.style.backgroundColor = originalBackground;
-            // Remove the transition after the effect
+            currentTimeLine.style.transform = 'scaleY(1)';
+            currentTimeLine.style.boxShadow = '0 1px 3px rgba(234, 67, 53, 0.3)';
             setTimeout(() => {
-                currentTimeSlot.style.transition = '';
+                currentTimeLine.style.transition = '';
             }, 600);
-        }, 1000);
+        }, 300);
+        
+    } else {
+        // Fallback: Find the hour line in the tasks canvas (works on all screen sizes)
+        const tasksCanvas = document.querySelector('.tasks-canvas');
+        const hourLine = tasksCanvas ? tasksCanvas.querySelector(`[data-hour="${currentHour}"]`) : null;
+        
+        if (hourLine) {
+            // Calculate scroll position manually for better control
+            const rect = hourLine.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetPosition = rect.top + scrollTop;
+            
+            // Calculate offset to center the element on screen
+            const windowHeight = window.innerHeight;
+            const offsetPosition = Math.max(0, targetPosition - (windowHeight / 2));
+            
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+            
+            // Add a subtle highlight effect
+            hourLine.style.transition = 'all 0.6s ease';
+            const originalBackground = hourLine.style.backgroundColor;
+            const originalHeight = hourLine.style.height;
+            
+            hourLine.style.backgroundColor = '#ffc107';
+            hourLine.style.height = '4px';
+            hourLine.style.boxShadow = '0 0 8px rgba(255, 193, 7, 0.5)';
+            
+            setTimeout(() => {
+                hourLine.style.backgroundColor = originalBackground;
+                hourLine.style.height = originalHeight;
+                hourLine.style.boxShadow = '';
+                setTimeout(() => {
+                    hourLine.style.transition = '';
+                }, 600);
+            }, 1000);
+        } else {
+            // Last resort: scroll to approximate position based on time
+            const tasksCanvas = document.querySelector('.tasks-canvas');
+            if (tasksCanvas) {
+                const approximatePosition = currentMinutes; // 1px per minute
+                const windowHeight = window.innerHeight;
+                const targetScroll = Math.max(0, approximatePosition - (windowHeight / 2));
+                
+                window.scrollTo({
+                    top: targetScroll,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    }
+    
+    // Always ensure we're viewing today after scrolling
+    if (!isToday) {
+        currentViewDate = new Date();
+        updateDateDisplay();
+        setTimeout(() => {
+            loadTasks();
+        }, 100);
     }
 }
 
