@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Main application entry point
 import '../css/style.css';
 

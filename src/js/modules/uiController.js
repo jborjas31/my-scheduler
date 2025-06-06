@@ -721,7 +721,8 @@ class UIController {
         `;
 
         // Create modal overlay
-        const modalOverlay = createElement('div', 'modal-overlay', '', editFormHtml);
+        const modalOverlay = createElement('div', 'modal-overlay');
+        modalOverlay.innerHTML = editFormHtml;
         modalOverlay.id = 'edit-task-modal';
         document.body.appendChild(modalOverlay);
 
