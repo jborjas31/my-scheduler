@@ -140,7 +140,6 @@ function setupDatePickerEventListener() {
             }
             
         } catch (error) {
-            console.error('Date picker error:', error);
             showError('Invalid date selected');
             e.target.value = getDateString(taskManager.getCurrentViewDate());
         }
@@ -301,19 +300,15 @@ window.deleteTask = async function(taskId) {
 };
 
 window.editTask = function(taskId, currentName, currentStartTime, currentEndTime, currentPriority) {
-    // This function would need to be implemented in the UI controller
-    // For now, we'll keep the existing inline editing functionality
-    console.log('Edit task functionality needs to be implemented in UI controller');
+    uiController.editTask(taskId, currentName, currentStartTime, currentEndTime, currentPriority);
 };
 
 window.saveTaskEdit = async function(taskId) {
-    // Implementation needed in UI controller
-    console.log('Save task edit functionality needs to be implemented');
+    await uiController.saveTaskEdit(taskId);
 };
 
 window.cancelTaskEdit = function(taskId) {
-    // Implementation needed in UI controller
-    console.log('Cancel task edit functionality needs to be implemented');
+    uiController.cancelTaskEdit(taskId);
 };
 
 // Modal functions

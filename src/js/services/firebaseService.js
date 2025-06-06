@@ -14,7 +14,6 @@ class FirebaseService {
     initialize() {
         // Validate configuration
         if (!FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.projectId) {
-            console.error('Firebase configuration is missing.');
             showError('Application configuration error. Please contact support.');
             return false;
         }
@@ -26,7 +25,6 @@ class FirebaseService {
             this.isInitialized = true;
             return true;
         } catch (error) {
-            console.error('Firebase initialization failed:', error);
             showError('Failed to initialize database connection.');
             return false;
         }
@@ -65,8 +63,6 @@ class FirebaseService {
                     }
                     
                     tasks.push(task);
-                } else {
-                    console.warn('Corrupted task data found:', doc.id, data);
                 }
             });
             
@@ -87,7 +83,6 @@ class FirebaseService {
             });
             return docRef.id;
         } catch (error) {
-            console.error('Error adding task:', error);
             this.handleFirebaseError(error);
             throw error;
         }
@@ -103,7 +98,6 @@ class FirebaseService {
             await updateDoc(taskRef, updates);
             return true;
         } catch (error) {
-            console.error('Error updating task:', error);
             this.handleFirebaseError(error);
             throw error;
         }
@@ -119,7 +113,6 @@ class FirebaseService {
             await deleteDoc(taskRef);
             return true;
         } catch (error) {
-            console.error('Error deleting task:', error);
             this.handleFirebaseError(error);
             throw error;
         }
@@ -143,7 +136,6 @@ class FirebaseService {
             }
             throw new Error('Task not found');
         } catch (error) {
-            console.error('Error toggling task completion:', error);
             this.handleFirebaseError(error);
             throw error;
         }

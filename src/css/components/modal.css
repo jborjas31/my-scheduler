@@ -330,3 +330,105 @@
 .modal-overlay {
     z-index: 2000; /* Higher than floating banner (1001) */
 }
+
+/* Edit task form styles */
+.edit-task-form {
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 100%;
+}
+
+.edit-task-form h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.4rem;
+    color: #333;
+    text-align: center;
+    font-weight: 600;
+}
+
+.edit-task-form .form-group {
+    margin-bottom: 15px;
+}
+
+.edit-task-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #555;
+    font-size: 14px;
+}
+
+.edit-task-form input,
+.edit-task-form select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.edit-task-form input:focus,
+.edit-task-form select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.edit-task-form .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.edit-task-form .btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.edit-task-form .btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.edit-task-form .btn-primary:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.edit-task-form .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.edit-task-form .btn-secondary:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+}
+
+.edit-task-form .btn:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .edit-task-form {
+        padding: 20px;
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+    }
+    
+    .edit-task-form .form-actions {
+        flex-direction: column;
+    }
+}

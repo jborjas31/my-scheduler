@@ -14,7 +14,6 @@ class FloatingBannerController {
         this.floatingBanner = document.getElementById('floating-banner');
         
         if (!this.floatingBanner) {
-            console.warn('Floating banner element not found');
             return;
         }
         

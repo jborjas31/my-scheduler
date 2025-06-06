@@ -2,7 +2,7 @@
 // This file sets up the testing environment for the scheduler application
 
 // Mock DOM environment for Node.js testing
-const { JSDOM } = require('jsdom');
+import { JSDOM } from 'jsdom';
 
 // Setup DOM
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {

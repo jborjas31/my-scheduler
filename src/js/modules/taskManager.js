@@ -37,7 +37,6 @@ class TaskManager {
             this.currentTasks = await firebaseService.getTasksForDate(dateString);
             return this.currentTasks;
         } catch (error) {
-            console.error('Error loading tasks:', error);
             showError('Failed to load tasks. Please check your internet connection.');
             return [];
         } finally {
@@ -103,7 +102,6 @@ class TaskManager {
             return true;
             
         } catch (error) {
-            console.error('Error adding task:', error);
             showError(error.message || 'Failed to add task. Please try again.');
             return false;
         } finally {
@@ -119,7 +117,6 @@ class TaskManager {
             showSuccess('Task updated successfully');
             return true;
         } catch (error) {
-            console.error('Error updating task:', error);
             showError('Failed to update task. Please try again.');
             return false;
         } finally {
@@ -139,7 +136,6 @@ class TaskManager {
             showSuccess('Task deleted successfully');
             return true;
         } catch (error) {
-            console.error('Error deleting task:', error);
             showError('Failed to delete task. Please try again.');
             return false;
         } finally {
@@ -154,7 +150,6 @@ class TaskManager {
             await this.loadTasks();
             return true;
         } catch (error) {
-            console.error('Error updating task:', error);
             showError('Failed to update task. Please try again.');
             return false;
         } finally {

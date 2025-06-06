@@ -73,19 +73,11 @@ export function escapeJsString(text) {
 }
 
 export function getElementById(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-        console.warn(`Element with id '${id}' not found`);
-    }
-    return element;
+    return document.getElementById(id);
 }
 
 export function querySelector(selector) {
-    const element = document.querySelector(selector);
-    if (!element) {
-        console.warn(`Element with selector '${selector}' not found`);
-    }
-    return element;
+    return document.querySelector(selector);
 }
 
 export function querySelectorAll(selector) {

@@ -489,6 +489,126 @@ class UIController {
         }
     }
 
+    editTask(taskId, currentName, currentStartTime, currentEndTime, currentPriority) {
+        // Create edit form HTML
+        const editFormHtml = `
+            <div class="edit-task-form">
+                <h3>Edit Task</h3>
+                <form id="edit-task-form-${taskId}">
+                    <div class="form-group">
+                        <label for="edit-task-name-${taskId}">Task Name:</label>
+                        <input type="text" id="edit-task-name-${taskId}" value="${escapeHtml(currentName)}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-start-time-${taskId}">Start Time:</label>
+                        <input type="time" id="edit-start-time-${taskId}" value="${this.formatTimeForInput(currentStartTime)}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-end-time-${taskId}">End Time:</label>
+                        <input type="time" id="edit-end-time-${taskId}" value="${this.formatTimeForInput(currentEndTime)}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-priority-${taskId}">Priority:</label>
+                        <select id="edit-priority-${taskId}">
+                            <option value="low" ${currentPriority === 'low' ? 'selected' : ''}>Low</option>
+                            <option value="medium" ${currentPriority === 'medium' ? 'selected' : ''}>Medium</option>
+                            <option value="high" ${currentPriority === 'high' ? 'selected' : ''}>High</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelTaskEdit('${taskId}')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        // Create modal overlay
+        const modalOverlay = createElement('div', 'modal-overlay', '', editFormHtml);
+        modalOverlay.id = 'edit-task-modal';
+        document.body.appendChild(modalOverlay);
+
+        // Add form submission handler
+        const form = document.getElementById(`edit-task-form-${taskId}`);
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveTaskEdit(taskId);
+        });
+
+        // Show modal
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
+        });
+
+        // Close on overlay click
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                this.cancelTaskEdit(taskId);
+            }
+        });
+
+        // Close on Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.cancelTaskEdit(taskId);
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+
+    async saveTaskEdit(taskId) {
+        const nameInput = document.getElementById(`edit-task-name-${taskId}`);
+        const startTimeInput = document.getElementById(`edit-start-time-${taskId}`);
+        const endTimeInput = document.getElementById(`edit-end-time-${taskId}`);
+        const priorityInput = document.getElementById(`edit-priority-${taskId}`);
+
+        if (!nameInput || !startTimeInput || !endTimeInput || !priorityInput) {
+            return;
+        }
+
+        const updates = {
+            name: nameInput.value.trim(),
+            startTime: this.parseTimeInput(startTimeInput.value),
+            endTime: this.parseTimeInput(endTimeInput.value),
+            priority: priorityInput.value
+        };
+
+        try {
+            const success = await taskManager.updateTask(taskId, updates);
+            if (success) {
+                this.cancelTaskEdit(taskId);
+                // Reload tasks and update UI
+                const tasks = await taskManager.loadTasks();
+                this.updateScheduleDisplay(tasks);
+                this.updateTaskDashboard(tasks);
+            }
+        } catch (error) {
+            // Error handling is done in taskManager
+        }
+    }
+
+    cancelTaskEdit(taskId) {
+        const modal = document.getElementById('edit-task-modal');
+        if (modal) {
+            modal.classList.add('modal-closing');
+            setTimeout(() => {
+                modal.remove();
+            }, 150);
+        }
+    }
+
+    formatTimeForInput(minutes) {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    }
+
+    parseTimeInput(timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+
     setFloatingBannerController(controller) {
         this.floatingBannerController = controller;
     }

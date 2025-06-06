@@ -22,7 +22,6 @@ class TimePicker {
         this.dropdown = document.getElementById(this.dropdownId);
         
         if (!this.input || !this.dropdown) {
-            console.warn(`TimePicker: Elements not found for ${this.inputId}`);
             return;
         }
 
