@@ -9,48 +9,78 @@ import { initializeDefaultTimePickers } from './modules/timePicker.js';
 import { initializeFloatingBanner } from './modules/floatingBanner.js';
 import { getDateString, isDateInRange } from './utils/dateUtils.js';
 import { showError } from './utils/domUtils.js';
+import { performanceMonitor, startTimer, endTimer, measure } from './utils/performanceMonitor.js';
 
 // Global state
 let startTimePicker, endTimePicker;
 let floatingBannerController;
 
 // Initialize application
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Firebase
-    if (!firebaseService.initialize()) {
-        return;
+document.addEventListener('DOMContentLoaded', async function() {
+    startTimer('app-initialization');
+    
+    try {
+        // Initialize Firebase
+        await measure('firebase-initialization', async () => {
+            if (!firebaseService.initialize()) {
+                throw new Error('Firebase initialization failed');
+            }
+        });
+        
+        // Initialize UI
+        await measure('ui-initialization', () => {
+            uiController.generateSchedule();
+            uiController.updateDateDisplay();
+        });
+        
+        // Load initial tasks
+        await measure('initial-task-load', () => loadTasks());
+        
+        // Start time updates
+        uiController.updateCurrentTime();
+        setInterval(() => uiController.updateCurrentTime(), 1000);
+        
+        // Initialize floating banner
+        floatingBannerController = initializeFloatingBanner();
+        uiController.setFloatingBannerController(floatingBannerController);
+        
+        // Initialize time pickers
+        const timePickers = initializeDefaultTimePickers();
+        startTimePicker = timePickers.startTimePicker;
+        endTimePicker = timePickers.endTimePicker;
+        
+        // Initialize event listeners
+        initializeEventListeners();
+        initializeScrollToTop();
+        
+        endTimer('app-initialization');
+        
+        // Log performance metrics in development
+        if (window.location.hostname === 'localhost') {
+            setTimeout(() => {
+                const report = performanceMonitor.generateReport();
+                console.group('🚀 App Performance Report');
+                console.log('Initialization metrics:', report.metrics);
+                console.log('Memory usage:', report.memory);
+                console.groupEnd();
+            }, 1000);
+        }
+        
+    } catch (error) {
+        endTimer('app-initialization');
+        console.error('App initialization failed:', error);
+        showError('Failed to initialize application. Please refresh the page.');
     }
-    
-    // Initialize UI
-    uiController.generateSchedule();
-    uiController.updateDateDisplay();
-    
-    // Load initial tasks
-    loadTasks();
-    
-    // Start time updates
-    uiController.updateCurrentTime();
-    setInterval(() => uiController.updateCurrentTime(), 1000);
-    
-    // Initialize floating banner
-    floatingBannerController = initializeFloatingBanner();
-    uiController.setFloatingBannerController(floatingBannerController);
-    
-    // Initialize time pickers
-    const timePickers = initializeDefaultTimePickers();
-    startTimePicker = timePickers.startTimePicker;
-    endTimePicker = timePickers.endTimePicker;
-    
-    // Initialize event listeners
-    initializeEventListeners();
-    initializeScrollToTop();
 });
 
 // Load tasks and update UI
 async function loadTasks() {
-    const tasks = await taskManager.loadTasks();
-    uiController.updateScheduleDisplay(tasks);
-    uiController.updateTaskDashboard(tasks);
+    return await measure('load-tasks', async () => {
+        const tasks = await taskManager.loadTasks();
+        uiController.updateScheduleDisplay(tasks);
+        uiController.updateTaskDashboard(tasks);
+        return tasks;
+    });
 }
 
 // Initialize all event listeners

@@ -4,6 +4,7 @@ import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, del
 import { FIREBASE_CONFIG } from '../constants.js';
 import { showError } from '../utils/domUtils.js';
 import { withErrorHandling, retryOperation, createUserFriendlyError, ERROR_TYPES } from '../utils/errorHandler.js';
+import { cacheService, CacheKeys } from './cacheService.js';
 
 class FirebaseService {
     constructor() {
@@ -35,39 +36,43 @@ class FirebaseService {
             throw new Error('Firebase not initialized');
         }
 
-        return await retryOperation(async () => {
-            const q = query(collection(this.db, 'tasks'), where('date', '==', dateString));
-            const snapshot = await getDocs(q);
-            
-            const tasks = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.startTime != null && data.endTime != null && data.name) {
-                    const task = {
-                        id: doc.id,
-                        ...data
-                    };
-                    
-                    // Ensure crossesMidnight is defined
-                    if (task.crossesMidnight === undefined) {
-                        task.crossesMidnight = task.endTime <= task.startTime;
-                    }
-                    
-                    // Calculate duration if missing
-                    if (task.duration === undefined) {
-                        if (task.crossesMidnight) {
-                            task.duration = (24 * 60 - task.startTime) + task.endTime;
-                        } else {
-                            task.duration = task.endTime - task.startTime;
+        const cacheKey = CacheKeys.tasks(dateString);
+        
+        return await cacheService.getOrFetch(cacheKey, async () => {
+            return await retryOperation(async () => {
+                const q = query(collection(this.db, 'tasks'), where('date', '==', dateString));
+                const snapshot = await getDocs(q);
+                
+                const tasks = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.startTime != null && data.endTime != null && data.name) {
+                        const task = {
+                            id: doc.id,
+                            ...data
+                        };
+                        
+                        // Ensure crossesMidnight is defined
+                        if (task.crossesMidnight === undefined) {
+                            task.crossesMidnight = task.endTime <= task.startTime;
                         }
+                        
+                        // Calculate duration if missing
+                        if (task.duration === undefined) {
+                            if (task.crossesMidnight) {
+                                task.duration = (24 * 60 - task.startTime) + task.endTime;
+                            } else {
+                                task.duration = task.endTime - task.startTime;
+                            }
+                        }
+                        
+                        tasks.push(task);
                     }
-                    
-                    tasks.push(task);
-                }
-            });
-            
-            return tasks;
-        }, 2, 500);
+                });
+                
+                return tasks;
+            }, 2, 500);
+        }, 300000); // Cache for 5 minutes
     }
 
     async addTask(taskData) {
@@ -81,6 +86,12 @@ class FirebaseService {
                 createdAt: new Date().toISOString(),
                 version: 1
             });
+            
+            // Invalidate cache for the task's date
+            if (taskData.date) {
+                cacheService.delete(CacheKeys.tasks(taskData.date));
+            }
+            
             return docRef.id;
         } catch (error) {
             this.handleFirebaseError(error);
@@ -96,6 +107,10 @@ class FirebaseService {
         try {
             const taskRef = doc(this.db, 'tasks', taskId);
             await updateDoc(taskRef, updates);
+            
+            // Invalidate relevant cache entries
+            cacheService.invalidatePattern(/^tasks:/);
+            
             return true;
         } catch (error) {
             this.handleFirebaseError(error);
@@ -111,6 +126,10 @@ class FirebaseService {
         try {
             const taskRef = doc(this.db, 'tasks', taskId);
             await deleteDoc(taskRef);
+            
+            // Invalidate relevant cache entries
+            cacheService.invalidatePattern(/^tasks:/);
+            
             return true;
         } catch (error) {
             this.handleFirebaseError(error);
@@ -132,6 +151,10 @@ class FirebaseService {
                 await updateDoc(taskRef, {
                     completed: !currentStatus
                 });
+                
+                // Invalidate relevant cache entries
+                cacheService.invalidatePattern(/^tasks:/);
+                
                 return !currentStatus;
             }
             throw new Error('Task not found');

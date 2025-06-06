@@ -11,6 +11,21 @@ export default {
         '<rootDir>/tests/**/*.test.js'
     ],
     
+    // Project configuration for different test types
+    projects: [
+        {
+            displayName: 'unit',
+            testMatch: ['<rootDir>/tests/utils/**/*.test.js'],
+            testEnvironment: 'jsdom'
+        },
+        {
+            displayName: 'integration',
+            testMatch: ['<rootDir>/tests/integration/**/*.test.js'],
+            testEnvironment: 'jsdom',
+            setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
+        }
+    ],
+    
     // Module file extensions
     moduleFileExtensions: ['js', 'json'],
     

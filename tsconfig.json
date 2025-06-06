@@ -1,0 +1,67 @@
+{
+  "compilerOptions": {
+    // Enable type checking for JavaScript files
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    
+    // Modern JavaScript target
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    
+    // Strict type checking
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    
+    // Module resolution
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    
+    // Additional checks
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    
+    // Source maps for debugging
+    "sourceMap": true,
+    "declaration": false,
+    
+    // Skip type checking for libraries
+    "skipLibCheck": true,
+    
+    // Base URL for module resolution
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/js/*": ["src/js/*"],
+      "@/css/*": ["src/css/*"],
+      "@/utils/*": ["src/js/utils/*"],
+      "@/services/*": ["src/js/services/*"],
+      "@/modules/*": ["src/js/modules/*"],
+      "@/types/*": ["src/js/types/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "*.config.js",
+    "*.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.min.js",
+    "coverage"
+  ],
+  "ts-node": {
+    "esm": true
+  }
+}
