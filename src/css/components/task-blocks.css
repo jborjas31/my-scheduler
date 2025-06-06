@@ -1,0 +1,313 @@
+/* Task blocks */
+.task-block {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 12px;
+    overflow: visible; /* Changed from hidden to visible for short tasks */
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 4px solid #1976d2;
+    background-color: #f9f9f9;
+    transition: all 0.2s ease;
+    
+    /* Ensure minimum visibility for very short tasks */
+    min-height: 18px; /* Minimum height to show at least the task name */
+}
+
+.task-block:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transform: translateX(2px);
+    z-index: 50; /* Bring to front on hover */
+}
+
+/* Task priority styling */
+.task-block.fixed {
+    border-left-color: #d32f2f;
+    background-color: #fff5f5;
+}
+
+.task-block.flexible {
+    border-left-color: #1976d2;
+    background-color: #f5f9ff;
+}
+
+/* Task completion styling */
+.task-block.completed {
+    opacity: 0.7;
+    background-color: #f0f8f0 !important;
+}
+
+.task-block.completed .task-name {
+    text-decoration: line-through;
+}
+
+/* Overdue task styling */
+.task-block.overdue {
+    border-left-color: #f44336 !important;
+    background-color: #ffebee !important;
+    animation: pulse-overdue 2s infinite;
+}
+
+@keyframes pulse-overdue {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* Responsive display based on task duration */
+
+/* Tiny tasks (less than 30 minutes) - Focus on name only */
+.task-block.task-tiny {
+    padding: 2px 4px;
+    min-height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.task-block.task-tiny .task-content-simple {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.task-block.task-tiny .task-name {
+    font-size: 9px;
+    line-height: 1.1;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.task-block.task-tiny .task-time {
+    display: none; /* Hide time for very short tasks */
+}
+
+/* Short tasks (30-60 minutes) - Compact layout */
+.task-block.task-short {
+    padding: 3px 5px;
+    min-height: 22px;
+}
+
+.task-block.task-short .task-content-simple {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.task-block.task-short .task-name {
+    font-size: 10px;
+    line-height: 1.1;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.task-block.task-short .task-time {
+    font-size: 8px;
+    margin-top: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* Medium tasks (1-2 hours) - Standard layout */
+.task-block.task-medium {
+    padding: 6px 8px;
+    min-height: 30px;
+}
+
+.task-block.task-medium .task-name {
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.task-block.task-medium .task-time {
+    font-size: 9px;
+}
+
+/* Long tasks (2+ hours) - Full layout */
+.task-block.task-long {
+    padding: 8px;
+    min-height: 40px;
+}
+
+.task-block.task-long .task-name {
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.task-block.task-long .task-time {
+    font-size: 10px;
+}
+
+/* Task content styling */
+.task-content-simple {
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
+    position: relative;
+}
+
+.task-name {
+    font-weight: 600;
+    color: #333;
+    line-height: 1.2;
+    overflow: hidden;
+    font-size: 12px;
+    margin: 0;
+    padding: 0;
+}
+
+.task-time {
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.completion-icon {
+    color: #28a745;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.priority-icon {
+    display: inline-block;
+    margin-right: 3px;
+    font-size: 0.9em;
+}
+
+.overdue-badge {
+    background-color: #f44336;
+    color: white;
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-size: 7px;
+    font-weight: bold;
+    margin-left: 4px;
+    text-transform: uppercase;
+}
+
+/* Special handling for very short tasks that need to show content on hover */
+.task-block.task-tiny:hover,
+.task-block.task-short:hover {
+    overflow: visible;
+    z-index: 100;
+    min-height: 24px;
+    padding: 4px 6px;
+    background-color: white;
+    border: 1px solid #007bff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.task-block.task-tiny:hover .task-name,
+.task-block.task-short:hover .task-name {
+    white-space: normal;
+    overflow: visible;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.task-block.task-tiny:hover .task-time,
+.task-block.task-short:hover .task-time {
+    display: block;
+    font-size: 9px;
+    color: #666;
+}
+
+/* Mobile specific improvements */
+@media (max-width: 768px) {
+    .task-block {
+        left: 8px;
+        right: 8px;
+        padding: 6px 8px;
+        font-size: 14px;
+        min-height: 24px; /* Larger minimum on mobile for touch */
+    }
+    
+    /* Mobile tiny tasks - ensure they're still tappable */
+    .task-block.task-tiny {
+        min-height: 20px;
+        padding: 3px 6px;
+    }
+    
+    .task-block.task-tiny .task-name {
+        font-size: 11px;
+        line-height: 1.2;
+    }
+    
+    /* Mobile short tasks */
+    .task-block.task-short {
+        min-height: 28px;
+        padding: 4px 7px;
+    }
+    
+    .task-block.task-short .task-name {
+        font-size: 12px;
+        line-height: 1.2;
+    }
+    
+    .task-block.task-short .task-time {
+        font-size: 10px;
+    }
+    
+    /* Mobile medium tasks */
+    .task-block.task-medium {
+        padding: 8px 10px;
+        min-height: 35px;
+    }
+    
+    .task-block.task-medium .task-name {
+        font-size: 13px;
+    }
+    
+    .task-block.task-medium .task-time {
+        font-size: 11px;
+    }
+    
+    /* Mobile long tasks */
+    .task-block.task-long {
+        padding: 10px 12px;
+        min-height: 45px;
+    }
+    
+    .task-block.task-long .task-name {
+        font-size: 14px;
+    }
+    
+    .task-block.task-long .task-time {
+        font-size: 12px;
+    }
+}
+
+/* Extra small mobile screens */
+@media (max-width: 480px) {
+    .task-block {
+        left: 6px;
+        right: 6px;
+        min-height: 22px;
+    }
+    
+    .task-block.task-tiny {
+        min-height: 18px;
+        padding: 2px 5px;
+    }
+    
+    .task-block.task-tiny .task-name {
+        font-size: 10px;
+    }
+}

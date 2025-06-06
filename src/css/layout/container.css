@@ -1,0 +1,36 @@
+/* Main container layout */
+.schedule-container {
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Current time display */
+.current-time {
+    margin-bottom: 20px;
+    padding: 12px;
+    background-color: #e3f2fd;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+/* Mobile responsive design */
+@media (max-width: 768px) {
+    body {
+        padding: 5px;
+    }
+    
+    .schedule-container {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+}

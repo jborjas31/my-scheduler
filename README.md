@@ -59,17 +59,38 @@ A modern, responsive web application for personal task scheduling and productivi
 - `npm run deploy` - Deploy to GitHub Pages
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
+- `npm run test` - Run unit tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
 
 ### Project Structure
 
 ```
 src/
-├── js/           # JavaScript modules
-├── css/          # Stylesheets
-├── assets/       # Images, icons, etc.
-├── index.html    # Main HTML file
-├── manifest.json # PWA manifest
-└── service-worker.js # Service worker for offline support
+├── js/                          # JavaScript modules
+│   ├── main.js                  # Application entry point
+│   ├── constants.js             # Configuration constants
+│   ├── services/                # Service layer
+│   │   └── firebaseService.js   # Firebase operations
+│   ├── modules/                 # Feature modules
+│   │   ├── taskManager.js       # Task management logic
+│   │   ├── uiController.js      # UI rendering and control
+│   │   ├── timePicker.js        # Custom time picker
+│   │   └── floatingBanner.js    # Navigation banner
+│   └── utils/                   # Utility functions
+│       ├── dateUtils.js         # Date/time helpers
+│       ├── taskValidation.js    # Validation logic
+│       ├── domUtils.js          # DOM manipulation
+│       └── errorHandler.js      # Error handling
+├── css/                         # Modular stylesheets
+│   ├── style.css               # Main CSS import file
+│   ├── base/                   # Base styles
+│   ├── layout/                 # Layout components
+│   ├── components/             # UI component styles
+│   └── utils/                  # Utility styles
+├── index.html                  # Main HTML file
+├── manifest.json               # PWA manifest
+└── service-worker.js           # Service worker for offline support
 ```
 
 ## 🔥 Firebase Setup

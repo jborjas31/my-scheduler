@@ -1,0 +1,198 @@
+/* Task overlap system */
+
+/* Base styles for all overlapping tasks - reduces repetition */
+.task-block[class*="overlap-"] {
+    z-index: 10;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    min-height: 20px;
+    padding: 3px 4px;
+    font-size: 10px;
+}
+
+/* Two overlapping tasks - Clean equal columns with 2px gap */
+.task-block.overlap-2-1 {
+    left: 5px;
+    width: calc(50% - 4px);
+}
+
+.task-block.overlap-2-2 {
+    left: calc(50% + 1px);
+    width: calc(50% - 6px);
+}
+
+/* Three overlapping tasks - Clean thirds with 2px gaps */
+.task-block.overlap-3-1 {
+    left: 5px;
+    width: calc(33.33% - 3px);
+}
+
+.task-block.overlap-3-2 {
+    left: calc(33.33% + 1px);
+    width: calc(33.33% - 3px);
+}
+
+.task-block.overlap-3-3 {
+    left: calc(66.66% + 2px);
+    width: calc(33.33% - 7px);
+}
+
+/* Four overlapping tasks - Clean quarters with 2px gaps */
+.task-block.overlap-4-1 {
+    left: 5px;
+    width: calc(25% - 2px);
+}
+
+.task-block.overlap-4-2 {
+    left: calc(25% + 1px);
+    width: calc(25% - 3px);
+}
+
+.task-block.overlap-4-3 {
+    left: calc(50% + 1px);
+    width: calc(25% - 3px);
+}
+
+.task-block.overlap-4-4 {
+    left: calc(75% + 1px);
+    width: calc(25% - 6px);
+}
+
+/* Enhanced hover effects for all overlapping tasks */
+.task-block[class*="overlap-"]:hover {
+    z-index: 100 !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25) !important;
+    border-color: #007bff !important;
+    transition: all 0.2s ease;
+}
+
+/* Font size adjustments for overlapping tasks */
+.task-block.overlap-2-1 .task-name,
+.task-block.overlap-2-2 .task-name {
+    font-size: 10px;
+    line-height: 1.1;
+    font-weight: 600;
+}
+
+.task-block.overlap-2-1 .task-time,
+.task-block.overlap-2-2 .task-time {
+    font-size: 8px;
+    margin-top: 1px;
+}
+
+.task-block.overlap-3-1 .task-name,
+.task-block.overlap-3-2 .task-name,
+.task-block.overlap-3-3 .task-name {
+    font-size: 9px;
+    line-height: 1.1;
+    font-weight: 600;
+}
+
+.task-block.overlap-3-1 .task-time,
+.task-block.overlap-3-2 .task-time,
+.task-block.overlap-3-3 .task-time {
+    font-size: 7px;
+    margin-top: 1px;
+}
+
+.task-block.overlap-4-1 .task-name,
+.task-block.overlap-4-2 .task-name,
+.task-block.overlap-4-3 .task-name,
+.task-block.overlap-4-4 .task-name {
+    font-size: 8px;
+    line-height: 1.0;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-block.overlap-4-1 .task-time,
+.task-block.overlap-4-2 .task-time,
+.task-block.overlap-4-3 .task-time,
+.task-block.overlap-4-4 .task-time {
+    display: none; /* Hide time for 4-way overlaps due to space constraints */
+}
+
+/* Priority indicators for overlapping tasks */
+.task-block[class*="overlap-"].fixed {
+    border-left: 3px solid #d32f2f !important;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffebee 100%);
+}
+
+.task-block[class*="overlap-"].flexible {
+    border-left: 3px solid #1976d2 !important;
+    background: linear-gradient(135deg, #f5f9ff 0%, #e3f2fd 100%);
+}
+
+.task-block[class*="overlap-"].completed {
+    background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%) !important;
+    opacity: 0.8;
+}
+
+/* Mobile responsive adjustments for overlapping tasks */
+@media (max-width: 768px) {
+    .task-block[class*="overlap-"] {
+        min-height: 28px;
+        padding: 4px 5px;
+        font-size: 11px;
+    }
+    
+    /* Adjust font sizes for mobile */
+    .task-block.overlap-2-1 .task-name,
+    .task-block.overlap-2-2 .task-name {
+        font-size: 11px;
+        line-height: 1.2;
+    }
+    
+    .task-block.overlap-2-1 .task-time,
+    .task-block.overlap-2-2 .task-time {
+        font-size: 9px;
+    }
+    
+    .task-block.overlap-3-1 .task-name,
+    .task-block.overlap-3-2 .task-name,
+    .task-block.overlap-3-3 .task-name {
+        font-size: 10px;
+        line-height: 1.1;
+    }
+    
+    .task-block.overlap-3-1 .task-time,
+    .task-block.overlap-3-2 .task-time,
+    .task-block.overlap-3-3 .task-time {
+        font-size: 8px;
+    }
+    
+    .task-block.overlap-4-1 .task-name,
+    .task-block.overlap-4-2 .task-name,
+    .task-block.overlap-4-3 .task-name,
+    .task-block.overlap-4-4 .task-name {
+        font-size: 9px;
+        line-height: 1.1;
+    }
+    
+    /* Show abbreviated time for 4-way overlaps on mobile */
+    .task-block.overlap-4-1 .task-time,
+    .task-block.overlap-4-2 .task-time,
+    .task-block.overlap-4-3 .task-time,
+    .task-block.overlap-4-4 .task-time {
+        display: block;
+        font-size: 7px;
+    }
+}
+
+/* Extra small mobile screens */
+@media (max-width: 480px) {
+    .task-block[class*="overlap-"] {
+        min-height: 22px;
+        padding: 3px 4px;
+    }
+    
+    .task-block.overlap-4-1 .task-time,
+    .task-block.overlap-4-2 .task-time,
+    .task-block.overlap-4-3 .task-time,
+    .task-block.overlap-4-4 .task-time {
+        display: none; /* Hide times on very small screens for 4+ overlaps */
+    }
+}

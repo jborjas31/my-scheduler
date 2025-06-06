@@ -1,0 +1,95 @@
+/* Date navigation */
+.date-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #e3f2fd;
+    border-radius: 8px;
+    border: 1px solid #bbdefb;
+    gap: 10px;
+}
+
+.date-display {
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.date-display h2 {
+    margin: 0 0 8px 0;
+    color: #1565c0;
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    word-wrap: break-word;
+}
+
+.nav-btn {
+    background-color: #1976d2;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.nav-btn:hover {
+    background-color: #1565c0;
+}
+
+#date-picker {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+    max-width: 200px;
+}
+
+.today-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 6px 12px;
+    font-size: 12px;
+    border: none;
+    border-radius: 4px;
+    margin-top: 8px;
+    cursor: pointer;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.today-btn:hover {
+    background-color: #218838;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .date-navigation {
+        flex-direction: column;
+        gap: 15px;
+        padding: 12px;
+    }
+    
+    .date-display h2 {
+        font-size: 1.2rem;
+    }
+    
+    .nav-btn {
+        padding: 10px 16px;
+        font-size: 16px;
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .date-navigation .nav-btn {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+}

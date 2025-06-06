@@ -1,0 +1,28 @@
+/* Print styles */
+@media print {
+    .task-input-section,
+    .date-navigation button,
+    .task-buttons,
+    .floating-banner,
+    .scroll-to-top {
+        display: none;
+    }
+    
+    body {
+        background: white;
+    }
+    
+    .schedule-container {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .task-block {
+        border: 1px solid #333 !important;
+        box-shadow: none !important;
+    }
+    
+    .current-time-line {
+        display: none;
+    }
+}

@@ -1,0 +1,184 @@
+/* Custom Time Picker Styles - Clean and Simple */
+.custom-time-input {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.time-picker-input {
+    width: 100%;
+    padding: 10px 35px 10px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: white;
+    cursor: text;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.time-picker-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.time-picker-input:hover {
+    border-color: #007bff;
+}
+
+/* Dropdown arrow */
+.custom-time-input::after {
+    content: '▼';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #666;
+    font-size: 12px;
+    z-index: 1;
+    transition: color 0.2s;
+}
+
+.custom-time-input:hover::after {
+    color: #007bff;
+}
+
+.time-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.time-dropdown.show {
+    display: block;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Clean time options - all look the same */
+.time-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.15s;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    color: #333;
+    font-weight: normal;
+}
+
+.time-option:hover {
+    background-color: #f8f9fa;
+}
+
+/* Remove all special highlighting */
+.time-option.selected {
+    background-color: white;
+    color: #333;
+    font-weight: normal;
+}
+
+.time-option.selected:hover {
+    background-color: #f8f9fa;
+}
+
+.time-option.current-time {
+    background-color: white;
+    color: #333;
+    font-weight: normal;
+}
+
+.time-option.current-time:hover {
+    background-color: #f8f9fa;
+}
+
+.time-option.current-time.selected {
+    background-color: white;
+    color: #333;
+    font-weight: normal;
+}
+
+.time-option.current-time.selected:hover {
+    background-color: #f8f9fa;
+}
+
+/* Hide any pseudo-elements that might cause spacing */
+.time-option::before,
+.time-option.current-time::before,
+.time-option.selected::before {
+    display: none;
+}
+
+.time-option:last-child {
+    border-bottom: none;
+}
+
+/* Scrollbar styling for dropdown */
+.time-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.time-dropdown::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.time-dropdown::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.time-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .time-dropdown {
+        max-height: 180px;
+    }
+    
+    .time-option {
+        padding: 12px 16px;
+        font-size: 16px;
+        background-color: white;
+        color: #333;
+        font-weight: normal;
+    }
+    
+    .time-option:hover,
+    .time-option.selected,
+    .time-option.current-time,
+    .time-option.current-time.selected {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: normal;
+    }
+    
+    .time-picker-input {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+}

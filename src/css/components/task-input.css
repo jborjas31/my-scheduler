@@ -1,0 +1,68 @@
+/* Task input section */
+.task-input-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.task-input-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #444;
+}
+
+.form-row input, 
+.form-row select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    background-color: white;
+}
+
+.form-row input:focus,
+.form-row select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.time-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.time-input-group select,
+.time-input-group input[type="time"] {
+    flex: 1;
+    min-width: 120px;
+}
+
+.time-input-group span {
+    font-weight: 500;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+    .task-input-section {
+        padding: 15px;
+    }
+}
