@@ -1,6 +1,7 @@
 // UI Controller module for display logic
 import { taskManager } from './taskManager.js';
 import { formatDateDisplay, formatTimeRange, formatHour, getCurrentTimeMinutes, getDateString, isToday, formatTimeFromMinutes } from '../utils/dateUtils.js';
+import { createTimePicker } from './timePicker.js';
 import { escapeHtml, escapeJsString, createElement } from '../utils/domUtils.js';
 import { SCHEDULE_CONFIG, CSS_CLASSES, ICONS, PRIORITY_TYPES, UI_CONFIG } from '../constants.js';
 
@@ -12,6 +13,7 @@ class UIController {
     initialize() {
         // Set up event delegation for dashboard task clicks
         this.setupDashboardTaskEventListeners();
+        this.setupTaskBlockEventListeners();
         // Note: Schedule grid click listeners are set up in generateSchedule()
     }
 
@@ -29,6 +31,30 @@ class UIController {
                     }
                 }
             });
+        }
+    }
+    
+    setupTaskBlockEventListeners() {
+        // Use event delegation for task blocks in schedule
+        document.addEventListener('click', (event) => {
+            const taskBlock = event.target.closest('.task-clickable');
+            if (taskBlock) {
+                const taskId = taskBlock.dataset.taskId;
+                if (taskId) {
+                    this.handleTaskBlockClick(taskId);
+                }
+            }
+        });
+    }
+    
+    async handleTaskBlockClick(taskId) {
+        try {
+            const task = await taskManager.getTaskById(taskId);
+            if (task) {
+                this.openTaskModal(task);
+            }
+        } catch (error) {
+            console.error('Error loading task for modal:', error);
         }
     }
 
@@ -74,6 +100,12 @@ class UIController {
     }
 
     handleScheduleGridHover(event) {
+        // Throttle hover events for performance
+        if (this.hoverThrottleTimer) return;
+        this.hoverThrottleTimer = setTimeout(() => {
+            this.hoverThrottleTimer = null;
+        }, 16); // ~60fps
+        
         const tasksCanvas = event.currentTarget;
         
         // Don't show hover if clicking on an existing task
@@ -316,11 +348,10 @@ class UIController {
         // Create task content
         this.populateTaskContent(taskBlock, task);
         
-        // Add click handler to open modal
+        // Add click handler to open modal (use event delegation for better performance)
         taskBlock.style.cursor = 'pointer';
-        taskBlock.addEventListener('click', () => {
-            this.openTaskModal(task);
-        });
+        taskBlock.dataset.taskId = task.id;
+        taskBlock.classList.add('task-clickable');
         
         return taskBlock;
     }
@@ -790,6 +821,9 @@ class UIController {
         // Setup event handlers
         this.setupQuickAddModalEventHandlers(modalOverlay, startTimeMinutes, endTimeMinutes);
         
+        // Initialize time pickers
+        this.initializeQuickAddTimePickers(startTimeMinutes, endTimeMinutes);
+        
         // Focus on task name input
         setTimeout(() => {
             const nameInput = document.getElementById('quick-task-name');
@@ -809,7 +843,7 @@ class UIController {
             <div class="modal-content">
                 <div class="modal-header">
                     <h3 class="modal-title">Quick Add Task</h3>
-                    <button class="modal-close" onclick="uiController.closeQuickAddModal()" aria-label="Close modal">&times;</button>
+                    <button class="modal-close" id="quick-add-close-btn" aria-label="Close modal">&times;</button>
                 </div>
                 
                 <div class="modal-body">
@@ -820,13 +854,19 @@ class UIController {
                         </div>
                         
                         <div class="form-row">
-                            <label>Time:</label>
-                            <div class="time-input-group">
-                                <input type="time" id="quick-start-time" value="${startTimeValue}" required>
-                                <span>to</span>
-                                <input type="time" id="quick-end-time" value="${endTimeValue}" required>
+                            <label>Start Time:</label>
+                            <div class="time-input-container">
+                                <input type="text" id="quick-start-time" class="time-input" value="${startTimeText}" readonly>
+                                <div id="quick-start-time-dropdown" class="time-dropdown"></div>
                             </div>
-                            <small class="time-hint">Selected: ${startTimeText} - ${endTimeText}</small>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label>End Time:</label>
+                            <div class="time-input-container">
+                                <input type="text" id="quick-end-time" class="time-input" value="${endTimeText}" readonly>
+                                <div id="quick-end-time-dropdown" class="time-dropdown"></div>
+                            </div>
                         </div>
                         
                         <div class="form-row">
@@ -841,10 +881,10 @@ class UIController {
                 
                 <div class="modal-footer">
                     <div class="modal-actions">
-                        <button class="modal-btn modal-btn-primary" onclick="uiController.saveQuickAddTask()">
+                        <button class="modal-btn modal-btn-primary" id="quick-add-save-btn" type="submit" form="quick-add-form">
                             ✅ Add Task
                         </button>
-                        <button class="modal-btn modal-btn-cancel" onclick="uiController.closeQuickAddModal()">
+                        <button class="modal-btn modal-btn-cancel" id="quick-add-cancel-btn" type="button">
                             Cancel
                         </button>
                     </div>
@@ -870,43 +910,39 @@ class UIController {
         };
         document.addEventListener('keydown', handleEscape);
         
+        // Add button event listeners
+        const closeBtn = document.getElementById('quick-add-close-btn');
+        const cancelBtn = document.getElementById('quick-add-cancel-btn');
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closeQuickAddModal());
+        }
+        
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.closeQuickAddModal());
+        }
+        
         // Handle form submission
         const form = document.getElementById('quick-add-form');
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveQuickAddTask();
-        });
-        
-        // Update time hint when times change
-        const startTimeInput = document.getElementById('quick-start-time');
-        const endTimeInput = document.getElementById('quick-end-time');
-        const timeHint = document.querySelector('.time-hint');
-        
-        const updateTimeHint = () => {
-            const startMinutes = this.parseTimeInput(startTimeInput.value);
-            const endMinutes = this.parseTimeInput(endTimeInput.value);
-            const startText = formatTimeFromMinutes(startMinutes);
-            const endText = formatTimeFromMinutes(endMinutes);
-            timeHint.textContent = `Selected: ${startText} - ${endText}`;
-        };
-        
-        startTimeInput.addEventListener('change', updateTimeHint);
-        endTimeInput.addEventListener('change', updateTimeHint);
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveQuickAddTask();
+            });
+        }
     }
 
     async saveQuickAddTask() {
         const nameInput = document.getElementById('quick-task-name');
-        const startTimeInput = document.getElementById('quick-start-time');
-        const endTimeInput = document.getElementById('quick-end-time');
         const priorityInput = document.getElementById('quick-task-priority');
         
-        if (!nameInput || !startTimeInput || !endTimeInput || !priorityInput) {
+        if (!nameInput || !priorityInput || !this.quickAddStartTimePicker || !this.quickAddEndTimePicker) {
             return;
         }
         
         const taskName = nameInput.value.trim();
-        const startTime = this.parseTimeInput(startTimeInput.value);
-        const endTime = this.parseTimeInput(endTimeInput.value);
+        const startTime = this.quickAddStartTimePicker.getValue();
+        const endTime = this.quickAddEndTimePicker.getValue();
         const priority = priorityInput.value;
         
         if (!taskName) {
@@ -935,8 +971,39 @@ class UIController {
             modal.classList.add('modal-closing');
             setTimeout(() => {
                 modal.remove();
+                // Clean up time pickers
+                this.quickAddStartTimePicker = null;
+                this.quickAddEndTimePicker = null;
             }, 150);
         }
+    }
+
+    initializeQuickAddTimePickers(startTimeMinutes, endTimeMinutes) {
+        // Create time pickers for the quick add modal
+        this.quickAddStartTimePicker = createTimePicker(
+            'quick-start-time',
+            'quick-start-time-dropdown',
+            0, // No default offset for start time
+            (selectedTime) => {
+                // Update end time to maintain 1-hour duration if needed
+                const currentEndTime = this.quickAddEndTimePicker?.getValue();
+                if (currentEndTime && selectedTime >= currentEndTime) {
+                    const newEndTime = selectedTime + 60; // Add 1 hour
+                    this.quickAddEndTimePicker.setValue(newEndTime);
+                }
+            }
+        );
+        
+        this.quickAddEndTimePicker = createTimePicker(
+            'quick-end-time',
+            'quick-end-time-dropdown',
+            60, // Default 1 hour after start time
+            null
+        );
+        
+        // Set initial values
+        this.quickAddStartTimePicker.setValue(startTimeMinutes);
+        this.quickAddEndTimePicker.setValue(endTimeMinutes);
     }
 
     parseTimeInput(timeString) {

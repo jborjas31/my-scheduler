@@ -11,7 +11,8 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-    animation: modalFadeIn 0.2s ease-out;
+    animation: modalFadeIn 0.15s ease-out;
+    will-change: opacity;
 }
 
 .modal-overlay.modal-closing {
@@ -44,7 +45,8 @@
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    animation: modalSlideIn 0.2s ease-out;
+    animation: modalSlideIn 0.15s ease-out;
+    will-change: transform, opacity;
 }
 
 .modal-overlay.modal-closing .modal-content {

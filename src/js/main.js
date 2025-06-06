@@ -37,9 +37,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Load initial tasks
         await measure('initial-task-load', () => loadTasks());
         
-        // Start time updates
+        // Start time updates with reduced frequency when tab is not visible
         uiController.updateCurrentTime();
-        setInterval(() => uiController.updateCurrentTime(), 1000);
+        const timeUpdateInterval = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                uiController.updateCurrentTime();
+            }
+        }, 1000);
+        
+        // Update immediately when tab becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                uiController.updateCurrentTime();
+            }
+        });
         
         // Initialize floating banner
         floatingBannerController = initializeFloatingBanner();
@@ -58,13 +69,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Log performance metrics in development
         if (window.location.hostname === 'localhost') {
-            setTimeout(() => {
+            requestIdleCallback(() => {
                 const report = performanceMonitor.generateReport();
                 console.group('🚀 App Performance Report');
                 console.log('Initialization metrics:', report.metrics);
                 console.log('Memory usage:', report.memory);
                 console.groupEnd();
-            }, 1000);
+            }, { timeout: 2000 });
         }
         
     } catch (error) {
@@ -349,15 +360,27 @@ window.closeTaskModal = function() {
 
 window.toggleTaskFromModal = async function(taskId, currentStatus) {
     uiController.closeTaskModal();
-    await toggleTaskCompletion(taskId);
+    await window.toggleTaskCompletion(taskId);
 };
 
 window.editTaskFromModal = function(taskId, currentName, currentStartTime, currentEndTime, currentPriority) {
     uiController.closeTaskModal();
-    editTask(taskId, currentName, currentStartTime, currentEndTime, currentPriority);
+    window.editTask(taskId, currentName, currentStartTime, currentEndTime, currentPriority);
 };
 
 window.deleteTaskFromModal = async function(taskId) {
     uiController.closeTaskModal();
-    await deleteTask(taskId);
+    await window.deleteTask(taskId);
 };
+
+// Quick Add Modal functions
+window.closeQuickAddModal = function() {
+    uiController.closeQuickAddModal();
+};
+
+window.saveQuickAddTask = async function() {
+    await uiController.saveQuickAddTask();
+};
+
+// Expose uiController globally for onclick handlers
+window.uiController = uiController;

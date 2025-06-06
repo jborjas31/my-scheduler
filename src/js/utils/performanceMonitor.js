@@ -297,25 +297,29 @@ class PerformanceMonitor {
      * @returns {Object} Performance report
      */
     generateReport() {
+        // Use a more lightweight report for better performance
         const report = {
-            timestamp: new Date().toISOString(),
             memory: this.getMemoryUsage(),
-            metrics: {},
-            summary: {
-                totalMetrics: this.metrics.length,
-                uniqueMetrics: new Set(this.metrics.map(m => m.name)).size,
-                timeRange: this.metrics.length > 0 ? {
-                    start: Math.min(...this.metrics.map(m => m.startTime)),
-                    end: Math.max(...this.metrics.map(m => m.endTime))
-                } : null
-            }
+            metrics: {}
         };
         
-        // Get stats for all unique metric names
-        const uniqueNames = [...new Set(this.metrics.map(m => m.name))];
-        uniqueNames.forEach(name => {
-            report.metrics[name] = this.getStats(name);
-        });
+        // Only include detailed metrics in development
+        if (window.location.hostname === 'localhost') {
+            report.timestamp = new Date().toISOString();
+            report.summary = {
+                totalMetrics: this.metrics.length,
+                uniqueMetrics: new Set(this.metrics.map(m => m.name)).size
+            };
+            
+            // Get stats for key metrics only
+            const keyMetrics = ['app-initialization', 'firebase-initialization', 'ui-initialization', 'load-tasks'];
+            keyMetrics.forEach(name => {
+                const stats = this.getStats(name);
+                if (stats.count > 0) {
+                    report.metrics[name] = stats;
+                }
+            });
+        }
         
         return report;
     }

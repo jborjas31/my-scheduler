@@ -51,12 +51,35 @@ class TaskManager {
             return cachedTask;
         }
         
-        // If not found in cache, fetch from Firebase
-        try {
-            return await firebaseService.getTaskById(taskId);
-        } catch (error) {
+        // Create a cache for individual task lookups to avoid duplicate requests
+        if (!this.taskCache) {
+            this.taskCache = new Map();
+        }
+        
+        // Check if we already have a pending request for this task
+        if (this.taskCache.has(taskId)) {
+            return await this.taskCache.get(taskId);
+        }
+        
+        // Create and cache the promise to avoid duplicate requests
+        const taskPromise = firebaseService.getTaskById(taskId).catch(error => {
             console.error('Error fetching task by ID:', error);
             return null;
+        });
+        
+        this.taskCache.set(taskId, taskPromise);
+        
+        try {
+            const task = await taskPromise;
+            // Keep cache small by removing old entries
+            if (this.taskCache.size > 50) {
+                const firstKey = this.taskCache.keys().next().value;
+                this.taskCache.delete(firstKey);
+            }
+            return task;
+        } finally {
+            // Clean up completed promise after a delay
+            setTimeout(() => this.taskCache.delete(taskId), 30000);
         }
     }
 

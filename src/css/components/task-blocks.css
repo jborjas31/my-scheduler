@@ -12,7 +12,8 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     border-left: 4px solid #1976d2;
     background-color: #f9f9f9;
-    transition: all 0.2s ease;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    will-change: transform;
     
     /* Ensure minimum visibility for very short tasks */
     min-height: 18px; /* Minimum height to show at least the task name */
@@ -22,6 +23,11 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     transform: translateX(2px);
     z-index: 50; /* Bring to front on hover */
+}
+
+/* Optimize for GPU acceleration */
+.task-block {
+    transform: translateZ(0);
 }
 
 /* Task priority styling */
