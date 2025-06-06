@@ -1,4 +1,6 @@
 // Firebase service for data operations
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { FIREBASE_CONFIG } from '../constants.js';
 import { showError } from '../utils/domUtils.js';
 import { withErrorHandling, retryOperation, createUserFriendlyError, ERROR_TYPES } from '../utils/errorHandler.js';
@@ -19,8 +21,8 @@ class FirebaseService {
 
         try {
             // Initialize Firebase
-            firebase.initializeApp(FIREBASE_CONFIG);
-            this.db = firebase.firestore();
+            const app = initializeApp(FIREBASE_CONFIG);
+            this.db = getFirestore(app);
             this.isInitialized = true;
             return true;
         } catch (error) {
@@ -36,9 +38,8 @@ class FirebaseService {
         }
 
         return await retryOperation(async () => {
-            const snapshot = await this.db.collection('tasks')
-                .where('date', '==', dateString)
-                .get();
+            const q = query(collection(this.db, 'tasks'), where('date', '==', dateString));
+            const snapshot = await getDocs(q);
             
             const tasks = [];
             snapshot.forEach(doc => {
@@ -79,7 +80,7 @@ class FirebaseService {
         }
 
         try {
-            const docRef = await this.db.collection('tasks').add({
+            const docRef = await addDoc(collection(this.db, 'tasks'), {
                 ...taskData,
                 createdAt: new Date().toISOString(),
                 version: 1
@@ -98,8 +99,8 @@ class FirebaseService {
         }
 
         try {
-            const taskRef = this.db.collection('tasks').doc(taskId);
-            await taskRef.update(updates);
+            const taskRef = doc(this.db, 'tasks', taskId);
+            await updateDoc(taskRef, updates);
             return true;
         } catch (error) {
             console.error('Error updating task:', error);
@@ -114,7 +115,8 @@ class FirebaseService {
         }
 
         try {
-            await this.db.collection('tasks').doc(taskId).delete();
+            const taskRef = doc(this.db, 'tasks', taskId);
+            await deleteDoc(taskRef);
             return true;
         } catch (error) {
             console.error('Error deleting task:', error);

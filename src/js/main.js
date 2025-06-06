@@ -16,11 +16,6 @@ let floatingBannerController;
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', function() {
-    if (typeof firebase === 'undefined') {
-        showError('Firebase is not loaded. Please check your internet connection.');
-        return;
-    }
-    
     // Initialize Firebase
     if (!firebaseService.initialize()) {
         return;

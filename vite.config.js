@@ -13,8 +13,7 @@ export default defineConfig({
       output: {
         // Manual chunk splitting for better caching
         manualChunks: {
-          'firebase': ['firebase'],
-          'vendor': ['firebase'] // Firebase is the only major vendor dependency
+          'firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth']
         },
         // Asset naming for cache busting
         entryFileNames: 'assets/[name]-[hash].js',
@@ -51,7 +50,11 @@ export default defineConfig({
   },
   // Dependency optimization
   optimizeDeps: {
-    include: ['firebase'],
+    include: [
+      'firebase/app',
+      'firebase/firestore',
+      'firebase/auth'
+    ],
     exclude: []
   },
   // Plugin optimizations
