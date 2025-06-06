@@ -4,10 +4,11 @@ import { showError } from '../utils/domUtils.js';
 import { TIME_PICKER_CONFIG, SCHEDULE_CONFIG, TIME_OFFSETS } from '../constants.js';
 
 class TimePicker {
-    constructor(inputId, dropdownId, defaultOffsetMinutes = 0) {
+    constructor(inputId, dropdownId, defaultOffsetMinutes = 0, onTimeSelected = null) {
         this.inputId = inputId;
         this.dropdownId = dropdownId;
         this.defaultOffsetMinutes = defaultOffsetMinutes;
+        this.onTimeSelected = onTimeSelected;
         this.input = null;
         this.dropdown = null;
         this.timeOptions = [];
@@ -124,6 +125,11 @@ class TimePicker {
         this.selectedValue = option.value;
         this.input.value = option.text;
         this.hideDropdown();
+        
+        // Trigger callback if provided
+        if (this.onTimeSelected) {
+            this.onTimeSelected(option.value, option.text);
+        }
     }
 
     showDropdown() {
@@ -142,11 +148,55 @@ class TimePicker {
         this.isDropdownOpen = false;
     }
 
+    showDropdownCenteredAt(targetTimeMinutes) {
+        // Show the dropdown first
+        this.showDropdown();
+        
+        // Find the closest time option to the target time
+        const closestOption = this.findClosestTimeOption(targetTimeMinutes);
+        if (closestOption) {
+            // Set this as the default selection (but don't trigger callback)
+            this.dropdown.querySelectorAll('.time-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            const optionDiv = this.dropdown.querySelector(`[data-value="${closestOption.value}"]`);
+            if (optionDiv) {
+                optionDiv.classList.add('selected');
+                
+                // Center the dropdown around this option
+                setTimeout(() => {
+                    const dropdownHeight = this.dropdown.clientHeight;
+                    const optionHeight = optionDiv.offsetHeight;
+                    const optionTop = optionDiv.offsetTop;
+                    const centerPosition = optionTop - (dropdownHeight / 2) + (optionHeight / 2);
+                    
+                    this.dropdown.scrollTop = Math.max(0, centerPosition);
+                }, 10);
+            }
+        }
+    }
+
+    findClosestTimeOption(targetMinutes) {
+        let closest = this.timeOptions[0];
+        let minDiff = Math.abs(targetMinutes - closest.minutes);
+        
+        for (let option of this.timeOptions) {
+            const diff = Math.abs(targetMinutes - option.minutes);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = option;
+            }
+        }
+        return closest;
+    }
+
     validateAndUpdateTime() {
         const inputValue = this.input.value.trim();
         if (inputValue) {
             try {
                 const parsedTime = parseManualTime(inputValue);
+                const previousValue = this.selectedValue;
                 this.selectedValue = parsedTime;
                 this.input.value = formatTimeFromMinutes(parsedTime);
                 
@@ -159,6 +209,11 @@ class TimePicker {
                     if (matchingOption) {
                         matchingOption.classList.add('selected');
                     }
+                }
+                
+                // Trigger callback if time actually changed and callback exists
+                if (this.onTimeSelected && previousValue !== parsedTime) {
+                    this.onTimeSelected(parsedTime, formatTimeFromMinutes(parsedTime));
                 }
             } catch (error) {
                 showError(error.message);
@@ -294,13 +349,29 @@ document.addEventListener('click', (e) => {
     }
 });
 
-export function createTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0) {
-    return new TimePicker(inputId, dropdownId, defaultOffsetMinutes);
+export function createTimePicker(inputId, dropdownId, defaultOffsetMinutes = 0, onTimeSelected = null) {
+    return new TimePicker(inputId, dropdownId, defaultOffsetMinutes, onTimeSelected);
 }
 
 export function initializeDefaultTimePickers() {
-    const startTimePicker = createTimePicker('task-start-time', 'start-time-dropdown', TIME_OFFSETS.START_TIME_DEFAULT);
+    // Create end time picker first (no callback needed)
     const endTimePicker = createTimePicker('task-end-time', 'end-time-dropdown', TIME_OFFSETS.END_TIME_DEFAULT);
+    
+    // Create start time picker with callback to auto-open end time picker
+    const startTimePicker = createTimePicker(
+        'task-start-time', 
+        'start-time-dropdown', 
+        TIME_OFFSETS.START_TIME_DEFAULT,
+        (selectedMinutes, selectedText) => {
+            // When start time is selected, auto-open end time picker centered 1 hour later
+            const endTimeTarget = selectedMinutes + 60; // Add 1 hour (60 minutes)
+            
+            // Small delay to let the start dropdown close smoothly
+            setTimeout(() => {
+                endTimePicker.showDropdownCenteredAt(endTimeTarget);
+            }, 150);
+        }
+    );
     
     return { startTimePicker, endTimePicker };
 }

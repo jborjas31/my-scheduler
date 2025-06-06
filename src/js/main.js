@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await measure('ui-initialization', () => {
             uiController.generateSchedule();
             uiController.updateDateDisplay();
+            uiController.initialize(); // Set up event listeners for dashboard tasks
         });
         
         // Load initial tasks

@@ -75,6 +75,28 @@ class FirebaseService {
         }, 300000); // Cache for 5 minutes
     }
 
+    async getTaskById(taskId) {
+        if (!this.isInitialized) {
+            throw new Error('Firebase not initialized');
+        }
+
+        return await retryOperation(async () => {
+            const taskRef = doc(this.db, 'tasks', taskId);
+            const docSnap = await getDoc(taskRef);
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.startTime != null && data.endTime != null && data.name) {
+                    return {
+                        id: docSnap.id,
+                        ...data
+                    };
+                }
+            }
+            return null;
+        }, 2, 500);
+    }
+
     async addTask(taskData) {
         if (!this.isInitialized) {
             throw new Error('Firebase not initialized');

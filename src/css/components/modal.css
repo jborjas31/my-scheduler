@@ -432,3 +432,79 @@
         flex-direction: column;
     }
 }
+
+/* Quick Add Task Modal Styles */
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #444;
+    font-size: 0.9rem;
+}
+
+.form-row input, 
+.form-row select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-row input:focus,
+.form-row select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.time-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.time-input-group input[type="time"] {
+    flex: 1;
+    min-width: 120px;
+}
+
+.time-input-group span {
+    font-weight: 500;
+    color: #666;
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+
+.time-hint {
+    display: block;
+    margin-top: 4px;
+    color: #666;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+/* Mobile adjustments for quick add form */
+@media (max-width: 768px) {
+    .time-input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .time-input-group input[type="time"] {
+        min-width: auto;
+    }
+    
+    .time-input-group span {
+        text-align: center;
+        font-size: 0.8rem;
+    }
+}

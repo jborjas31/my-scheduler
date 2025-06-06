@@ -44,6 +44,22 @@ class TaskManager {
         }
     }
 
+    async getTaskById(taskId) {
+        // First try to find in current tasks cache
+        const cachedTask = this.currentTasks.find(task => task.id === taskId);
+        if (cachedTask) {
+            return cachedTask;
+        }
+        
+        // If not found in cache, fetch from Firebase
+        try {
+            return await firebaseService.getTaskById(taskId);
+        } catch (error) {
+            console.error('Error fetching task by ID:', error);
+            return null;
+        }
+    }
+
     async addTask(taskName, startTime, endTime, priority) {
         try {
             // Validate inputs

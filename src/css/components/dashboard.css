@@ -89,6 +89,23 @@
     border-left-color: #f44336;
 }
 
+/* Clickable dashboard task hover effects */
+.dashboard-task-clickable {
+    transition: all 0.2s ease;
+}
+
+.dashboard-task-clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff !important;
+    border-left-width: 6px;
+}
+
+.dashboard-task-clickable:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .dashboard-task .task-name {
     font-weight: 600;
     color: #333;

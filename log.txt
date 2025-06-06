@@ -1,7 +1,0 @@
-2025-05-30
-- Added scroll up button and floating navigation banner.
-
-2025-05-29
-- Added Task Dashboard.
-- Updated CSS styling and made javascript improvements.
-- Updated time navigation fields and Today button.

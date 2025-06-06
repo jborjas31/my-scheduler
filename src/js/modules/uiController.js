@@ -9,6 +9,141 @@ class UIController {
         this.floatingBannerController = null;
     }
 
+    initialize() {
+        // Set up event delegation for dashboard task clicks
+        this.setupDashboardTaskEventListeners();
+        // Set up click-to-add functionality on schedule grid
+        this.setupScheduleGridClickListeners();
+    }
+
+    setupDashboardTaskEventListeners() {
+        // Use event delegation on the dashboard container
+        const taskDashboard = document.querySelector('.task-dashboard');
+        if (taskDashboard) {
+            taskDashboard.addEventListener('click', (event) => {
+                // Find the clicked dashboard task
+                const dashboardTask = event.target.closest('.dashboard-task-clickable');
+                if (dashboardTask) {
+                    const taskId = dashboardTask.getAttribute('data-task-id');
+                    if (taskId) {
+                        this.handleDashboardTaskClick(taskId);
+                    }
+                }
+            });
+        }
+    }
+
+    async handleDashboardTaskClick(taskId) {
+        try {
+            // Get the task data from the task manager
+            const task = await taskManager.getTaskById(taskId);
+            if (task) {
+                this.openTaskModal(task);
+            } else {
+                console.error('Task not found:', taskId);
+            }
+        } catch (error) {
+            console.error('Error loading task for modal:', error);
+        }
+    }
+
+    setupScheduleGridClickListeners() {
+        // Use event delegation on the tasks canvas
+        const tasksCanvas = document.querySelector('.tasks-canvas');
+        if (tasksCanvas) {
+            // Add hover effects for better UX
+            tasksCanvas.addEventListener('mousemove', (event) => {
+                this.handleScheduleGridHover(event);
+            });
+            
+            tasksCanvas.addEventListener('mouseleave', () => {
+                this.clearScheduleGridHover();
+            });
+            
+            // Handle clicks to add tasks
+            tasksCanvas.addEventListener('click', (event) => {
+                this.handleScheduleGridClick(event);
+            });
+        }
+    }
+
+    handleScheduleGridHover(event) {
+        const tasksCanvas = event.currentTarget;
+        
+        // Don't show hover if clicking on an existing task
+        if (event.target.closest('.task-block')) {
+            this.clearScheduleGridHover();
+            return;
+        }
+        
+        // Calculate time from click position
+        const rect = tasksCanvas.getBoundingClientRect();
+        const relativeY = event.clientY - rect.top + tasksCanvas.scrollTop;
+        const timeInMinutes = this.pixelsToMinutes(relativeY);
+        const roundedTime = this.roundToNearestInterval(timeInMinutes, 15);
+        
+        // Show hover effect
+        this.showScheduleGridHover(roundedTime);
+    }
+
+    handleScheduleGridClick(event) {
+        // Don't handle clicks on existing tasks - let them handle their own clicks
+        if (event.target.closest('.task-block')) {
+            return;
+        }
+        
+        const tasksCanvas = event.currentTarget;
+        
+        // Calculate time from click position
+        const rect = tasksCanvas.getBoundingClientRect();
+        const relativeY = event.clientY - rect.top + tasksCanvas.scrollTop;
+        const timeInMinutes = this.pixelsToMinutes(relativeY);
+        const roundedStartTime = this.roundToNearestInterval(timeInMinutes, 15);
+        const defaultEndTime = roundedStartTime + 60; // Default 1-hour task
+        
+        // Clear any hover effects
+        this.clearScheduleGridHover();
+        
+        // Open quick add modal
+        this.openQuickAddTaskModal(roundedStartTime, defaultEndTime);
+    }
+
+    pixelsToMinutes(pixels) {
+        // Each minute = 1 pixel in our layout
+        return Math.round(pixels);
+    }
+
+    roundToNearestInterval(minutes, intervalMinutes) {
+        return Math.round(minutes / intervalMinutes) * intervalMinutes;
+    }
+
+    showScheduleGridHover(timeInMinutes) {
+        // Remove any existing hover indicator
+        this.clearScheduleGridHover();
+        
+        const tasksCanvas = document.querySelector('.tasks-canvas');
+        if (!tasksCanvas) return;
+        
+        // Create hover indicator
+        const hoverIndicator = createElement('div', 'schedule-hover-indicator');
+        hoverIndicator.style.top = `${timeInMinutes}px`;
+        hoverIndicator.style.height = '60px'; // Default 1-hour height
+        
+        // Add time label
+        const timeLabel = createElement('div', 'hover-time-label');
+        timeLabel.textContent = `Click to add task at ${formatTimeFromMinutes(timeInMinutes)}`;
+        hoverIndicator.appendChild(timeLabel);
+        
+        tasksCanvas.appendChild(hoverIndicator);
+    }
+
+    clearScheduleGridHover() {
+        const existingHover = document.querySelector('.schedule-hover-indicator');
+        if (existingHover) {
+            existingHover.remove();
+        }
+    }
+
     updateDateDisplay() {
         const dateDisplay = document.getElementById('current-date-display');
         const datePicker = document.getElementById('date-picker');
@@ -265,11 +400,18 @@ class UIController {
             extraClasses += ' completed';
         }
         
+        // Escape task data for safe HTML attributes
+        const escapedTaskId = escapeHtml(task.id);
+        const escapedTaskName = escapeHtml(task.name);
+        
         return `
-            <div class="dashboard-task ${extraClasses}">
+            <div class="dashboard-task ${extraClasses} dashboard-task-clickable" 
+                 data-task-id="${escapedTaskId}"
+                 style="cursor: pointer;"
+                 title="Click to view task details">
                 <div class="task-name">
                     <span class="priority-badge">${priorityIcon}</span>
-                    ${task.name}
+                    ${escapedTaskName}
                     ${type === 'completed' ? '<span class="completion-badge">✅</span>' : ''}
                     ${crossMidnightIndicator}
                 </div>
@@ -602,6 +744,175 @@ class UIController {
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    }
+
+    openQuickAddTaskModal(startTimeMinutes, endTimeMinutes) {
+        // Remove any existing modal
+        const existingModal = document.getElementById('quick-add-task-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Create quick add modal
+        const modalHTML = this.createQuickAddModalHTML(startTimeMinutes, endTimeMinutes);
+        
+        const modalOverlay = createElement('div', 'modal-overlay');
+        modalOverlay.id = 'quick-add-task-modal';
+        modalOverlay.innerHTML = modalHTML;
+        
+        // Add modal to page
+        document.body.appendChild(modalOverlay);
+        
+        // Setup event handlers
+        this.setupQuickAddModalEventHandlers(modalOverlay, startTimeMinutes, endTimeMinutes);
+        
+        // Focus on task name input
+        setTimeout(() => {
+            const nameInput = document.getElementById('quick-task-name');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 100);
+    }
+
+    createQuickAddModalHTML(startTimeMinutes, endTimeMinutes) {
+        const startTimeText = formatTimeFromMinutes(startTimeMinutes);
+        const endTimeText = formatTimeFromMinutes(endTimeMinutes);
+        const startTimeValue = this.formatTimeForInput(startTimeMinutes);
+        const endTimeValue = this.formatTimeForInput(endTimeMinutes);
+        
+        return `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Quick Add Task</h3>
+                    <button class="modal-close" onclick="uiController.closeQuickAddModal()" aria-label="Close modal">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <form id="quick-add-form">
+                        <div class="form-row">
+                            <label for="quick-task-name">Task Name:</label>
+                            <input type="text" id="quick-task-name" placeholder="Enter task name..." required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label>Time:</label>
+                            <div class="time-input-group">
+                                <input type="time" id="quick-start-time" value="${startTimeValue}" required>
+                                <span>to</span>
+                                <input type="time" id="quick-end-time" value="${endTimeValue}" required>
+                            </div>
+                            <small class="time-hint">Selected: ${startTimeText} - ${endTimeText}</small>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label for="quick-task-priority">Priority:</label>
+                            <select id="quick-task-priority" required>
+                                <option value="flexible">⏰ Flexible (can be skipped)</option>
+                                <option value="fixed">🔒 Fixed (cannot be skipped)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="modal-actions">
+                        <button class="modal-btn modal-btn-primary" onclick="uiController.saveQuickAddTask()">
+                            ✅ Add Task
+                        </button>
+                        <button class="modal-btn modal-btn-cancel" onclick="uiController.closeQuickAddModal()">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    setupQuickAddModalEventHandlers(modalOverlay, originalStartTime, originalEndTime) {
+        // Close on overlay click
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                this.closeQuickAddModal();
+            }
+        });
+        
+        // Close on Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.closeQuickAddModal();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        // Handle form submission
+        const form = document.getElementById('quick-add-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveQuickAddTask();
+        });
+        
+        // Update time hint when times change
+        const startTimeInput = document.getElementById('quick-start-time');
+        const endTimeInput = document.getElementById('quick-end-time');
+        const timeHint = document.querySelector('.time-hint');
+        
+        const updateTimeHint = () => {
+            const startMinutes = this.parseTimeInput(startTimeInput.value);
+            const endMinutes = this.parseTimeInput(endTimeInput.value);
+            const startText = formatTimeFromMinutes(startMinutes);
+            const endText = formatTimeFromMinutes(endMinutes);
+            timeHint.textContent = `Selected: ${startText} - ${endText}`;
+        };
+        
+        startTimeInput.addEventListener('change', updateTimeHint);
+        endTimeInput.addEventListener('change', updateTimeHint);
+    }
+
+    async saveQuickAddTask() {
+        const nameInput = document.getElementById('quick-task-name');
+        const startTimeInput = document.getElementById('quick-start-time');
+        const endTimeInput = document.getElementById('quick-end-time');
+        const priorityInput = document.getElementById('quick-task-priority');
+        
+        if (!nameInput || !startTimeInput || !endTimeInput || !priorityInput) {
+            return;
+        }
+        
+        const taskName = nameInput.value.trim();
+        const startTime = this.parseTimeInput(startTimeInput.value);
+        const endTime = this.parseTimeInput(endTimeInput.value);
+        const priority = priorityInput.value;
+        
+        if (!taskName) {
+            nameInput.focus();
+            return;
+        }
+        
+        try {
+            // Use the existing task manager to add the task
+            await taskManager.addTask(taskName, startTime, endTime, priority);
+            this.closeQuickAddModal();
+            
+            // Refresh the schedule display
+            const tasks = await taskManager.loadTasks();
+            this.updateScheduleDisplay(tasks);
+            this.updateTaskDashboard(tasks);
+        } catch (error) {
+            console.error('Error adding quick task:', error);
+            // Error will be handled by taskManager.addTask
+        }
+    }
+
+    closeQuickAddModal() {
+        const modal = document.getElementById('quick-add-task-modal');
+        if (modal) {
+            modal.classList.add('modal-closing');
+            setTimeout(() => {
+                modal.remove();
+            }, 150);
+        }
     }
 
     parseTimeInput(timeString) {
