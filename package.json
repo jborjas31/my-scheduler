@@ -2,6 +2,7 @@
   "name": "my-daily-scheduler",
   "version": "1.0.0",
   "description": "A personal task scheduling web application for daily productivity management",
+  "type": "module",
   "main": "src/index.html",
   "private": true,
   "scripts": {

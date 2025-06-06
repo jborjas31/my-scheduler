@@ -1,5 +1,5 @@
 // Babel configuration for Jest testing
-module.exports = {
+export default {
     presets: [
         [
             '@babel/preset-env',

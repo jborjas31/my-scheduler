@@ -1,5 +1,5 @@
 // Jest configuration for the scheduler application
-module.exports = {
+export default {
     // Test environment
     testEnvironment: 'jsdom',
     
