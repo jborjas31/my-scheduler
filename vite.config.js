@@ -13,7 +13,7 @@ export default defineConfig({
       output: {
         // Manual chunk splitting for better caching
         manualChunks: {
-          'firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth']
+          'firebase': ['firebase/app', 'firebase/firestore']
         },
         // Asset naming for cache busting
         entryFileNames: 'assets/[name]-[hash].js',
@@ -52,8 +52,7 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'firebase/app',
-      'firebase/firestore',
-      'firebase/auth'
+      'firebase/firestore'
     ],
     exclude: []
   },

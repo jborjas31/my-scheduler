@@ -1,6 +1,6 @@
 // Firebase service for data operations
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { FIREBASE_CONFIG } from '../constants.js';
 import { showError } from '../utils/domUtils.js';
 import { withErrorHandling, retryOperation, createUserFriendlyError, ERROR_TYPES } from '../utils/errorHandler.js';
@@ -131,12 +131,12 @@ class FirebaseService {
         }
 
         try {
-            const taskRef = this.db.collection('tasks').doc(taskId);
-            const doc = await taskRef.get();
+            const taskRef = doc(this.db, 'tasks', taskId);
+            const docSnap = await getDoc(taskRef);
             
-            if (doc.exists) {
-                const currentStatus = doc.data().completed;
-                await taskRef.update({
+            if (docSnap.exists()) {
+                const currentStatus = docSnap.data().completed;
+                await updateDoc(taskRef, {
                     completed: !currentStatus
                 });
                 return !currentStatus;
