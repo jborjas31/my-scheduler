@@ -1,6 +1,6 @@
 // UI Controller module for display logic
 import { taskManager } from './taskManager.js';
-import { formatDateDisplay, formatTimeRange, formatHour, getCurrentTimeMinutes, getDateString, isToday } from '../utils/dateUtils.js';
+import { formatDateDisplay, formatTimeRange, formatHour, getCurrentTimeMinutes, getDateString, isToday, formatTimeFromMinutes } from '../utils/dateUtils.js';
 import { escapeHtml, escapeJsString, createElement } from '../utils/domUtils.js';
 import { SCHEDULE_CONFIG, CSS_CLASSES, ICONS, PRIORITY_TYPES, UI_CONFIG } from '../constants.js';
 
@@ -12,8 +12,7 @@ class UIController {
     initialize() {
         // Set up event delegation for dashboard task clicks
         this.setupDashboardTaskEventListeners();
-        // Set up click-to-add functionality on schedule grid
-        this.setupScheduleGridClickListeners();
+        // Note: Schedule grid click listeners are set up in generateSchedule()
     }
 
     setupDashboardTaskEventListeners() {
@@ -50,6 +49,8 @@ class UIController {
     setupScheduleGridClickListeners() {
         // Use event delegation on the tasks canvas
         const tasksCanvas = document.querySelector('.tasks-canvas');
+        console.log('Setting up schedule grid listeners, tasksCanvas found:', !!tasksCanvas);
+        
         if (tasksCanvas) {
             // Add hover effects for better UX
             tasksCanvas.addEventListener('mousemove', (event) => {
@@ -62,8 +63,13 @@ class UIController {
             
             // Handle clicks to add tasks
             tasksCanvas.addEventListener('click', (event) => {
+                console.log('Schedule grid clicked!', event.target);
                 this.handleScheduleGridClick(event);
             });
+            
+            console.log('Schedule grid click listeners attached successfully');
+        } else {
+            console.error('Tasks canvas not found when setting up click listeners');
         }
     }
 
@@ -87,8 +93,15 @@ class UIController {
     }
 
     handleScheduleGridClick(event) {
+        console.log('handleScheduleGridClick called', {
+            target: event.target,
+            targetClass: event.target.className,
+            closestTaskBlock: event.target.closest('.task-block')
+        });
+        
         // Don't handle clicks on existing tasks - let them handle their own clicks
         if (event.target.closest('.task-block')) {
+            console.log('Click on task block, ignoring');
             return;
         }
         
@@ -100,6 +113,14 @@ class UIController {
         const timeInMinutes = this.pixelsToMinutes(relativeY);
         const roundedStartTime = this.roundToNearestInterval(timeInMinutes, 15);
         const defaultEndTime = roundedStartTime + 60; // Default 1-hour task
+        
+        console.log('Opening quick add modal for time:', {
+            clickY: event.clientY,
+            relativeY,
+            timeInMinutes,
+            roundedStartTime,
+            defaultEndTime
+        });
         
         // Clear any hover effects
         this.clearScheduleGridHover();
@@ -205,6 +226,9 @@ class UIController {
         // Append columns to schedule grid
         scheduleGrid.appendChild(timeLabelsColumn);
         scheduleGrid.appendChild(tasksCanvas);
+        
+        // Set up click-to-add functionality now that the canvas exists
+        this.setupScheduleGridClickListeners();
     }
 
     updateScheduleDisplay(tasks) {
